@@ -483,10 +483,12 @@ export async function addClass(name: string, grade_level: string, total_students
   const supabase = getServiceClient()
   if (supabase) {
     try {
-      const { data } = await supabase.from("classes").insert({ name, grade_level, total_students }).select().single()
+      const { data, error } = await supabase.from("classes").insert({ name, grade_level, total_students }).select().single()
+      if (error) throw new Error(error.message || "Eroare la crearea clasei")
       if (data) return data as ClassRow
-    } catch (e) {
-      console.warn(e)
+    } catch (e: any) {
+      console.error("Supabase Error (addClass):", e)
+      throw e
     }
   }
   const newClass: ClassRow = {
@@ -531,10 +533,12 @@ export async function addTeacher(full_name: string, email: string, phone: string
   const supabase = getServiceClient()
   if (supabase) {
     try {
-      const { data } = await supabase.from("teachers").insert({ full_name, email: email || null, phone: phone || null }).select().single()
+      const { data, error } = await supabase.from("teachers").insert({ full_name, email: email || null, phone: phone || null }).select().single()
+      if (error) throw new Error(error.message || "Eroare la crearea cadrului didactic")
       if (data) return data as TeacherRow
-    } catch (e) {
-      console.warn(e)
+    } catch (e: any) {
+      console.error("Supabase Error (addTeacher):", e)
+      throw e
     }
   }
   const newTeacher: TeacherRow = {
