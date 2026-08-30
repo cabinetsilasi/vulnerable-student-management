@@ -15,7 +15,7 @@ interface ClassTeacherManagerProps {
   onSaveSubmission?: (assignmentId: string, students: StudentWithVulns[], isFinal: boolean) => Promise<void>
   onAddClass: (name: string, grade: string, total: number, teacherId?: string) => Promise<void>
   onEditClass?: (id: string, name: string, grade: string, total: number, teacherId?: string) => Promise<void>
-  onAddTeacher: (name: string, email: string, phone: string) => Promise<void>
+  onAddTeacher: (name: string, email: string, phone: string, classId?: string) => Promise<void>
   onEditTeacher?: (id: string, name: string, email: string, phone: string) => Promise<void>
   onAssign: (classId: string, teacherId: string) => Promise<void>
   onBulkImport: (rows: Array<{ diriginte: string; email?: string; phone?: string; clasa: string; totalElevi?: number }>) => Promise<void>
@@ -69,6 +69,7 @@ export function ClassTeacherManager({
   const [teacherNameInput, setTeacherNameInput] = useState("")
   const [teacherEmailInput, setTeacherEmailInput] = useState("")
   const [teacherPhoneInput, setTeacherPhoneInput] = useState("")
+  const [addTeacherClassId, setAddTeacherClassId] = useState("")
 
   const [selectedClassId, setSelectedClassId] = useState("")
   const [selectedTeacherId, setSelectedTeacherId] = useState("")
@@ -114,10 +115,11 @@ export function ClassTeacherManager({
     e.preventDefault()
     if (!teacherNameInput.trim()) return
     try {
-      await onAddTeacher(teacherNameInput.trim(), teacherEmailInput.trim(), teacherPhoneInput.trim())
+      await onAddTeacher(teacherNameInput.trim(), teacherEmailInput.trim(), teacherPhoneInput.trim(), addTeacherClassId || undefined)
       setTeacherNameInput("")
       setTeacherEmailInput("")
       setTeacherPhoneInput("")
+      setAddTeacherClassId("")
       setShowAddTeacher(false)
     } catch (err: any) {
       alert("❌ Eroare la adăugarea cadrului didactic: " + (err?.message || "Operațiunea a eșuat."))
@@ -532,6 +534,31 @@ export function ClassTeacherManager({
                   onChange={(e) => setTeacherPhoneInput(e.target.value)}
                   className="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-teal-500/20 focus:outline-none"
                 />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 mb-1">Clasă Alocată (opțional, dar recomandat)</label>
+                <select
+                  value={addTeacherClassId}
+                  onChange={(e) => setAddTeacherClassId(e.target.value)}
+                  className="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-teal-500/20 focus:outline-none font-semibold text-slate-900"
+                >
+                  <option value="">Nu aloca nicio clasă acum</option>
+                  {[...classes]
+                    .sort((a, b) => {
+                      const aAssigned = assignments.some((asg) => asg.class_id === a.id || asg.class?.id === a.id)
+                      const bAssigned = assignments.some((asg) => asg.class_id === b.id || asg.class?.id === b.id)
+                      if (aAssigned === bAssigned) return a.name.localeCompare(b.name)
+                      return aAssigned ? 1 : -1
+                    })
+                    .map((c) => {
+                      const isAssigned = assignments.some((a) => a.class_id === c.id || a.class?.id === c.id)
+                      return (
+                        <option key={c.id} value={c.id}>
+                          {isAssigned ? "" : "[Neasociată] "} {c.name} {isAssigned ? "— [Alocată deja]" : ""}
+                        </option>
+                      )
+                    })}
+                </select>
               </div>
               <div className="flex justify-end gap-2 pt-2">
                 <button

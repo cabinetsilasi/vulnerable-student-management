@@ -270,8 +270,11 @@ export default function AdminPage() {
               }
               await refreshData()
             }}
-            onAddTeacher={async (name, email, phone) => {
-              await addTeacher(name, email, phone)
+            onAddTeacher={async (name, email, phone, classId) => {
+              const newTch = await addTeacher(name, email, phone)
+              if (classId && newTch?.id) {
+                await assignTeacherToClass(classId, newTch.id)
+              }
               await refreshData()
             }}
             onEditTeacher={async (id, name, email, phone) => {
