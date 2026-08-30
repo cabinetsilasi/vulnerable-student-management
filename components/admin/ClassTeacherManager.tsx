@@ -571,14 +571,22 @@ export function ClassTeacherManager({
                   required
                 >
                   <option value="">-- Selectează o clasă existentă --</option>
-                  {classes.map((c) => {
-                    const isAssigned = assignments.some((a) => a.class_id === c.id || a.class?.id === c.id)
-                    return (
-                      <option key={c.id} value={c.id}>
-                        {c.name} ({c.total_students} elevi) {isAssigned ? "— [Alocată deja]" : "— ⚠️ FĂRĂ DIRIGINTE"}
-                      </option>
-                    )
-                  })}
+                  {/* Toate clasele din Supabase, nefiltrate, dar sortate astfel încât cele neasociate să apară primele */}
+                  {[...classes]
+                    .sort((a, b) => {
+                      const aAssigned = assignments.some((asg) => asg.class_id === a.id || asg.class?.id === a.id)
+                      const bAssigned = assignments.some((asg) => asg.class_id === b.id || asg.class?.id === b.id)
+                      if (aAssigned === bAssigned) return a.name.localeCompare(b.name)
+                      return aAssigned ? 1 : -1
+                    })
+                    .map((c) => {
+                      const isAssigned = assignments.some((a) => a.class_id === c.id || a.class?.id === c.id)
+                      return (
+                        <option key={c.id} value={c.id}>
+                          {isAssigned ? "" : "[Neasociată] "} {c.name} ({c.total_students} elevi) {isAssigned ? "— [Alocată deja]" : ""}
+                        </option>
+                      )
+                    })}
                 </select>
               </div>
               <div>
