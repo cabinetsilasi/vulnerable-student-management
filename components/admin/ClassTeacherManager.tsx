@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { AssignmentWithRelations, ClassRow, TeacherRow, FormCategory, StudentWithVulns } from "@/lib/types"
 import { TeacherForm } from "@/components/teacher/TeacherForm"
-import { Plus, Edit2, Trash2, Upload, UserPlus, School, RefreshCw, CheckCircle2, Clock, Mail, Eye, X, Printer } from "lucide-react"
+import { Plus, Edit2, Trash2, Upload, UserPlus, School, RefreshCw, CheckCircle2, Clock, Mail, Eye, X, Printer, Link2 } from "lucide-react"
 import * as XLSX from "xlsx"
 
 interface ClassTeacherManagerProps {
@@ -202,10 +202,21 @@ export function ClassTeacherManager({
           </button>
           <button
             onClick={() => setShowAddClass(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-teal-600 hover:bg-teal-500 text-white text-sm font-bold rounded-xl transition-all cursor-pointer shadow-sm"
+            className="flex items-center gap-2 px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-semibold rounded-xl transition-all cursor-pointer"
           >
             <Plus className="w-4 h-4" />
             Adaugă Clasă
+          </button>
+          <button
+            onClick={() => {
+              if (classes.length > 0 && !selectedClassId) setSelectedClassId(classes[0].id)
+              if (teachers.length > 0 && !selectedTeacherId) setSelectedTeacherId(teachers[0].id)
+              setShowAssignModal(true)
+            }}
+            className="flex items-center gap-2 px-4 py-2 bg-teal-600 hover:bg-teal-500 text-white text-sm font-bold rounded-xl transition-all cursor-pointer shadow-sm"
+          >
+            <Link2 className="w-4 h-4" />
+            + Asociază Clasă cu Diriginte
           </button>
         </div>
       </div>
@@ -422,38 +433,46 @@ export function ClassTeacherManager({
         </div>
       )}
 
-      {/* Modal: Reasignare Diriginte la Clasă */}
+      {/* Modal: Asociază Clasă cu Diriginte */}
       {showAssignModal && (
         <div className="fixed inset-0 z-50 bg-slate-950/40 backdrop-blur-md flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl space-y-4">
-            <h3 className="text-lg font-bold text-slate-900">Reasignează Diriginte la Clasă</h3>
+            <div className="flex items-center gap-2 border-b border-slate-100 pb-3">
+              <Link2 className="w-5 h-5 text-teal-600" />
+              <h3 className="text-lg font-bold text-slate-900">Asociază Clasă cu Diriginte</h3>
+            </div>
+            <p className="text-xs text-slate-500">
+              Selectați o clasă și un diriginte existent din baza de date pentru a le conecta și a genera codul PIN (4 cifre) și Token-ul unic.
+            </p>
             <form onSubmit={handleAssignPair} className="space-y-4">
               <div>
-                <label className="block text-xs font-semibold text-slate-600 mb-1">Selectează Clasa</label>
+                <label className="block text-xs font-semibold text-slate-600 mb-1">1. Selectează Clasa</label>
                 <select
                   value={selectedClassId}
                   onChange={(e) => setSelectedClassId(e.target.value)}
-                  className="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-teal-500/20 focus:outline-none"
+                  className="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-teal-500/20 focus:outline-none font-semibold text-slate-900"
+                  required
                 >
-                  <option value="">Alege o clasă...</option>
+                  <option value="">-- Selectează clasa din Supabase --</option>
                   {classes.map((c) => (
                     <option key={c.id} value={c.id}>
-                      {c.name}
+                      {c.name} ({c.total_students} elevi)
                     </option>
                   ))}
                 </select>
               </div>
               <div>
-                <label className="block text-xs font-semibold text-slate-600 mb-1">Selectează Dirigintele Responsabil</label>
+                <label className="block text-xs font-semibold text-slate-600 mb-1">2. Selectează Dirigintele Responsabil</label>
                 <select
                   value={selectedTeacherId}
                   onChange={(e) => setSelectedTeacherId(e.target.value)}
-                  className="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-teal-500/20 focus:outline-none"
+                  className="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-teal-500/20 focus:outline-none font-semibold text-slate-900"
+                  required
                 >
-                  <option value="">Alege un diriginte...</option>
+                  <option value="">-- Selectează dirigintele din Supabase --</option>
                   {teachers.map((t) => (
                     <option key={t.id} value={t.id}>
-                      {t.full_name} ({t.email || "Fără email"})
+                      {t.full_name} {t.email ? `(${t.email})` : "(Fără email)"}
                     </option>
                   ))}
                 </select>
@@ -462,11 +481,11 @@ export function ClassTeacherManager({
                 <button
                   type="button"
                   onClick={() => setShowAssignModal(false)}
-                  className="px-4 py-2 text-sm text-slate-600 hover:bg-slate-100 rounded-xl"
+                  className="px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 rounded-xl transition-colors"
                 >
                   Anulează
                 </button>
-                <button type="submit" className="px-4 py-2 text-sm font-bold bg-teal-600 text-white rounded-xl hover:bg-teal-500">
+                <button type="submit" className="px-4 py-2 text-sm font-bold bg-teal-600 text-white rounded-xl hover:bg-teal-500 transition-colors shadow-sm">
                   Salvează Asocierea
                 </button>
               </div>
