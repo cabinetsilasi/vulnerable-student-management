@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { AssignmentWithRelations, ClassRow, TeacherRow, FormCategory, StudentWithVulns } from "@/lib/types"
 import { TeacherForm } from "@/components/teacher/TeacherForm"
-import { Plus, Edit2, Trash2, Upload, UserPlus, School, RefreshCw, CheckCircle2, Clock, Mail, Eye, X, Printer, Link2 } from "lucide-react"
+import { Plus, Edit2, Trash2, Upload, UserPlus, School, RefreshCw, CheckCircle2, Clock, Mail, Eye, X, Printer, Link2, AlertTriangle } from "lucide-react"
 import * as XLSX from "xlsx"
 
 interface ClassTeacherManagerProps {
@@ -261,12 +261,12 @@ export function ClassTeacherManager({
         </div>
       )}
 
-      {/* Main Table of Assignments */}
+      {/* Main Table of Assignments & Classes */}
       <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
         <div className="p-6 border-b border-slate-100 flex justify-between items-center">
-          <h3 className="text-base font-bold text-slate-900">Asocieri Active (Clasă - Diriginte Responsabil)</h3>
+          <h3 className="text-base font-bold text-slate-900">Gestionare Clase & Asocieri Diriginți</h3>
           <span className="text-xs font-semibold px-3 py-1 bg-slate-100 text-slate-600 rounded-full">
-            Total {assignments.length} clase configurate
+            Total {classes.length} clase ({assignments.length} cu diriginte alocat)
           </span>
         </div>
 
@@ -284,75 +284,137 @@ export function ClassTeacherManager({
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {assignments.map((assign) => (
-                <tr key={assign.id} className="hover:bg-slate-50/80 transition-colors">
-                  <td className="p-4 font-bold text-slate-900">{assign.class.name}</td>
-                  <td className="p-4 text-slate-600">{assign.class.total_students} elevi</td>
-                  <td className="p-4 font-medium text-slate-800">{assign.teacher.full_name}</td>
-                  <td className="p-4 text-slate-500 text-xs">
-                    {assign.teacher.email || <span className="text-amber-600 italic">Fără email</span>}
-                  </td>
-                  <td className="p-4">
-                    <span className="font-mono text-sm font-bold bg-slate-100 text-slate-700 px-2.5 py-1 rounded-lg border border-slate-200">
-                      {assign.pin}
-                    </span>
-                  </td>
-                  <td className="p-4 text-center">
-                    {assign.status === "completat" ? (
-                      <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-bold rounded-full">
-                        <CheckCircle2 className="w-3.5 h-3.5" /> Completat
-                      </span>
-                    ) : assign.status === "trimis" ? (
-                      <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-teal-50 text-teal-700 border border-teal-200 text-xs font-bold rounded-full">
-                        <Mail className="w-3.5 h-3.5" /> Invitație trimisă
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-amber-50 text-amber-700 border border-amber-200 text-xs font-bold rounded-full">
-                        <Clock className="w-3.5 h-3.5" /> În așteptare
-                      </span>
-                    )}
-                  </td>
-                  <td className="p-4 text-right">
-                    <div className="flex justify-end items-center gap-1.5">
-                      <button
-                        onClick={() => {
-                          setViewingAssignment(assign)
-                          setShowViewSheetModal(true)
-                        }}
-                        className="p-2 hover:bg-teal-50 rounded-lg text-slate-600 hover:text-teal-700 transition-colors"
-                        title="Vizualizează fișa clasei completată de diriginte"
-                      >
-                        <Eye className="w-4 h-4 text-teal-600" />
-                      </button>
-                      <button
-                        onClick={() => handleOpenEditClass(assign.class, assign.teacher.id)}
-                        className="p-2 hover:bg-teal-50 rounded-lg text-slate-600 hover:text-teal-700 transition-colors"
-                        title="Editează clasă, efectiv elevi (transferuri) sau diriginte"
-                      >
-                        <Edit2 className="w-4 h-4 text-teal-600" />
-                      </button>
-                      <button
-                        onClick={() => {
-                          setSelectedClassId(assign.class.id)
-                          setSelectedTeacherId(assign.teacher.id)
-                          setShowAssignModal(true)
-                        }}
-                        className="p-2 hover:bg-slate-100 rounded-lg text-slate-600 hover:text-teal-600 transition-colors"
-                        title="Reasignează diriginte"
-                      >
-                        <RefreshCw className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={() => onDeleteClass(assign.class.id)}
-                        className="p-2 hover:bg-rose-50 rounded-lg text-slate-400 hover:text-rose-600 transition-colors"
-                        title="Șterge clasă"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
+              {classes.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className="p-8 text-center text-slate-500 text-sm">
+                    Nu există nicio clasă înregistrată. Apăsați pe "+ Adaugă Clasă" pentru a începe.
                   </td>
                 </tr>
-              ))}
+              ) : (
+                classes.map((cls) => {
+                  const assign = assignments.find((a) => a.class_id === cls.id || a.class?.id === cls.id)
+                  if (assign) {
+                    return (
+                      <tr key={cls.id} className="hover:bg-slate-50/80 transition-colors">
+                        <td className="p-4 font-bold text-slate-900">{assign.class.name}</td>
+                        <td className="p-4 text-slate-600">{assign.class.total_students} elevi</td>
+                        <td className="p-4 font-medium text-slate-800">{assign.teacher.full_name}</td>
+                        <td className="p-4 text-slate-500 text-xs">
+                          {assign.teacher.email || <span className="text-amber-600 italic">Fără email</span>}
+                        </td>
+                        <td className="p-4">
+                          <span className="font-mono text-sm font-bold bg-slate-100 text-slate-700 px-2.5 py-1 rounded-lg border border-slate-200">
+                            {assign.pin}
+                          </span>
+                        </td>
+                        <td className="p-4 text-center">
+                          {assign.status === "completat" ? (
+                            <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-bold rounded-full">
+                              <CheckCircle2 className="w-3.5 h-3.5" /> Completat
+                            </span>
+                          ) : assign.status === "trimis" ? (
+                            <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-teal-50 text-teal-700 border border-teal-200 text-xs font-bold rounded-full">
+                              <Mail className="w-3.5 h-3.5" /> Invitație trimisă
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-amber-50 text-amber-700 border border-amber-200 text-xs font-bold rounded-full">
+                              <Clock className="w-3.5 h-3.5" /> În așteptare
+                            </span>
+                          )}
+                        </td>
+                        <td className="p-4 text-right">
+                          <div className="flex justify-end items-center gap-1.5">
+                            <button
+                              onClick={() => {
+                                setViewingAssignment(assign)
+                                setShowViewSheetModal(true)
+                              }}
+                              className="p-2 hover:bg-teal-50 rounded-lg text-slate-600 hover:text-teal-700 transition-colors"
+                              title="Vizualizează fișa clasei completată de diriginte"
+                            >
+                              <Eye className="w-4 h-4 text-teal-600" />
+                            </button>
+                            <button
+                              onClick={() => handleOpenEditClass(assign.class, assign.teacher.id)}
+                              className="p-2 hover:bg-teal-50 rounded-lg text-slate-600 hover:text-teal-700 transition-colors"
+                              title="Editează clasă, efectiv elevi (transferuri) sau diriginte"
+                            >
+                              <Edit2 className="w-4 h-4 text-teal-600" />
+                            </button>
+                            <button
+                              onClick={() => {
+                                setSelectedClassId(assign.class.id)
+                                setSelectedTeacherId(assign.teacher.id)
+                                setShowAssignModal(true)
+                              }}
+                              className="p-2 hover:bg-slate-100 rounded-lg text-slate-600 hover:text-teal-600 transition-colors"
+                              title="Reasignează diriginte"
+                            >
+                              <RefreshCw className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() => onDeleteClass(assign.class.id)}
+                              className="p-2 hover:bg-rose-50 rounded-lg text-slate-400 hover:text-rose-600 transition-colors"
+                              title="Șterge clasă"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    )
+                  } else {
+                    return (
+                      <tr key={cls.id} className="hover:bg-amber-50/40 bg-amber-50/20 transition-colors">
+                        <td className="p-4 font-bold text-slate-900">{cls.name}</td>
+                        <td className="p-4 text-slate-600">{cls.total_students} elevi</td>
+                        <td className="p-4">
+                          <span className="text-amber-700 font-semibold text-xs inline-flex items-center gap-1.5 bg-amber-100/80 px-2.5 py-1 rounded-lg">
+                            <AlertTriangle className="w-3.5 h-3.5 text-amber-600" /> Fără diriginte alocat
+                          </span>
+                        </td>
+                        <td className="p-4 text-slate-400 text-xs">—</td>
+                        <td className="p-4 text-slate-400 font-mono text-xs">—</td>
+                        <td className="p-4 text-center">
+                          <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-slate-100 text-slate-500 border border-slate-200 text-xs font-medium rounded-full">
+                            Neasociat
+                          </span>
+                        </td>
+                        <td className="p-4 text-right">
+                          <div className="flex justify-end items-center gap-1.5">
+                            <button
+                              onClick={() => {
+                                setSelectedClassId(cls.id)
+                                if (teachers.length > 0) setSelectedTeacherId(teachers[0].id)
+                                setShowAssignModal(true)
+                              }}
+                              className="px-3 py-1.5 bg-teal-600 hover:bg-teal-500 text-white text-xs font-bold rounded-xl flex items-center gap-1.5 shadow-sm transition-all cursor-pointer"
+                              title="Asociază diriginte la această clasă"
+                            >
+                              <Link2 className="w-3.5 h-3.5" />
+                              Asociază Diriginte
+                            </button>
+                            <button
+                              onClick={() => handleOpenEditClass(cls)}
+                              className="p-2 hover:bg-teal-50 rounded-lg text-slate-600 hover:text-teal-700 transition-colors"
+                              title="Editează clasă sau efectiv elevi"
+                            >
+                              <Edit2 className="w-4 h-4 text-teal-600" />
+                            </button>
+                            <button
+                              onClick={() => onDeleteClass(cls.id)}
+                              className="p-2 hover:bg-rose-50 rounded-lg text-slate-400 hover:text-rose-600 transition-colors"
+                              title="Șterge clasă"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    )
+                  }
+                })
+              )}
             </tbody>
           </table>
         </div>
