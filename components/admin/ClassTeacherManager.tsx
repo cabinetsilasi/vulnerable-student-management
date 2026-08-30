@@ -81,35 +81,51 @@ export function ClassTeacherManager({
   const handleSaveEditClass = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!editingClassId || !editClassName.trim()) return
-    if (onEditClass) {
-      await onEditClass(editingClassId, editClassName.trim(), editGrade, Number(editTotalElevi) || 25, editTeacherId || undefined)
+    try {
+      if (onEditClass) {
+        await onEditClass(editingClassId, editClassName.trim(), editGrade, Number(editTotalElevi) || 25, editTeacherId || undefined)
+      }
+      setShowEditClassModal(false)
+    } catch (err: any) {
+      alert("❌ Eroare la salvarea clasei/asocierii: " + (err?.message || "Operațiunea a eșuat."))
     }
-    setShowEditClassModal(false)
   }
 
   const handleCreateClass = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!classNameInput.trim()) return
-    await onAddClass(classNameInput.trim(), gradeInput, Number(totalEleviInput) || 25)
-    setClassNameInput("")
-    setShowAddClass(false)
+    try {
+      await onAddClass(classNameInput.trim(), gradeInput, Number(totalEleviInput) || 25)
+      setClassNameInput("")
+      setShowAddClass(false)
+    } catch (err: any) {
+      alert("❌ Eroare la crearea clasei: " + (err?.message || "Operațiunea a eșuat."))
+    }
   }
 
   const handleCreateTeacher = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!teacherNameInput.trim()) return
-    await onAddTeacher(teacherNameInput.trim(), teacherEmailInput.trim(), teacherPhoneInput.trim())
-    setTeacherNameInput("")
-    setTeacherEmailInput("")
-    setTeacherPhoneInput("")
-    setShowAddTeacher(false)
+    try {
+      await onAddTeacher(teacherNameInput.trim(), teacherEmailInput.trim(), teacherPhoneInput.trim())
+      setTeacherNameInput("")
+      setTeacherEmailInput("")
+      setTeacherPhoneInput("")
+      setShowAddTeacher(false)
+    } catch (err: any) {
+      alert("❌ Eroare la adăugarea cadrului didactic: " + (err?.message || "Operațiunea a eșuat."))
+    }
   }
 
   const handleAssignPair = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!selectedClassId || !selectedTeacherId) return
-    await onAssign(selectedClassId, selectedTeacherId)
-    setShowAssignModal(false)
+    try {
+      await onAssign(selectedClassId, selectedTeacherId)
+      setShowAssignModal(false)
+    } catch (err: any) {
+      alert("❌ Eroare la crearea asocierii în baza de date: " + (err?.message || "Operațiunea a eșuat."))
+    }
   }
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {

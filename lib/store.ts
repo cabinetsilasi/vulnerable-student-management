@@ -299,11 +299,18 @@ function saveStoreState(state: AppStoreState) {
   }
 }
 
+export function generate4DigitPIN(): string {
+  return Math.floor(1000 + Math.random() * 9000).toString()
+}
+
 export function generate6DigitPIN(): string {
-  return Math.floor(100000 + Math.random() * 900000).toString()
+  return generate4DigitPIN()
 }
 
 export function generateToken(): string {
+  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+    return crypto.randomUUID()
+  }
   return "token-" + Math.random().toString(36).substring(2, 10) + "-" + Date.now().toString(36)
 }
 
@@ -562,18 +569,28 @@ export async function deleteTeacher(id: string): Promise<void> {
 
 export async function assignTeacherToClass(classId: string, teacherId: string): Promise<AssignmentRow> {
   const supabase = getServiceClient()
+  const pin = generate4DigitPIN()
+  const token = generateToken()
+
   if (supabase) {
     try {
-      const pin = generate6DigitPIN()
-      const token = generateToken()
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from("assignments")
-        .upsert({ class_id: classId, teacher_id: teacherId, pin, token }, { onConflict: "class_id,teacher_id" })
+        .upsert(
+          { class_id: classId, teacher_id: teacherId, pin, token, status: "asteptare" },
+          { onConflict: "class_id,teacher_id" }
+        )
         .select()
         .single()
+
+      if (error) {
+        console.error("Eroare Supabase la crearea/actualizarea asocierii:", error)
+        throw new Error(error.message || "Eroare la salvarea asocierii în Supabase")
+      }
       if (data) return data as AssignmentRow
-    } catch (e) {
-      console.warn(e)
+    } catch (e: any) {
+      console.error("Eroare la salvarea asocierii:", e)
+      throw e
     }
   }
 
