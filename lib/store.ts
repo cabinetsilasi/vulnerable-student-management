@@ -320,19 +320,27 @@ export async function getStoreData(): Promise<AppStoreState> {
   const supabase = getServiceClient()
   if (supabase) {
     try {
-      const { data: classesData } = await supabase.from("classes").select("*").order("name")
-      const { data: teachersData } = await supabase.from("teachers").select("*").order("full_name")
-      const { data: assignmentsData } = await supabase.from("assignments").select("*")
-      const { data: categoriesData } = await supabase.from("form_categories").select("*").order("position")
+      const { data: classesData, error: clsErr } = await supabase.from("classes").select("*").order("name")
+      const { data: teachersData, error: tchErr } = await supabase.from("teachers").select("*").order("full_name")
+      const { data: assignmentsData, error: asgErr } = await supabase.from("assignments").select("*")
+      const { data: categoriesData, error: catErr } = await supabase.from("form_categories").select("*").order("position")
 
-      if (classesData && teachersData && assignmentsData && categoriesData) {
-        return {
-          classes: classesData as ClassRow[],
-          teachers: teachersData as TeacherRow[],
-          assignments: assignmentsData as AssignmentRow[],
-          categories: categoriesData as FormCategory[],
-          submissions: memoryState.submissions,
-        }
+      if (clsErr) console.error("Error fetching classes from Supabase:", clsErr)
+      if (tchErr) console.error("Error fetching teachers from Supabase:", tchErr)
+      if (asgErr) console.error("Error fetching assignments from Supabase:", asgErr)
+      if (catErr) console.error("Error fetching categories from Supabase:", catErr)
+
+      const finalClasses = (classesData && classesData.length > 0) ? (classesData as ClassRow[]) : memoryState.classes
+      const finalTeachers = (teachersData && teachersData.length > 0) ? (teachersData as TeacherRow[]) : memoryState.teachers
+      const finalAssignments = assignmentsData ? (assignmentsData as AssignmentRow[]) : memoryState.assignments
+      const finalCategories = (categoriesData && categoriesData.length > 0) ? (categoriesData as FormCategory[]) : memoryState.categories
+
+      return {
+        classes: finalClasses,
+        teachers: finalTeachers,
+        assignments: finalAssignments,
+        categories: finalCategories,
+        submissions: memoryState.submissions,
       }
     } catch (e) {
       console.warn("Supabase fetch error, fallback to memory state:", e)
@@ -448,25 +456,41 @@ export async function deleteCategory(id: string): Promise<void> {
 export async function getAssignmentsWithRelations(): Promise<AssignmentWithRelations[]> {
   const data = await getStoreData()
   const { assignments, classes, teachers } = data
-  return assignments.map((a) => {
-    const cls = classes.find((c) => c.id === a.class_id) || {
-      id: a.class_id,
-      name: "Clasă necunoscută",
-      grade_level: null,
-      total_students: 0,
-      created_at: new Date().toISOString(),
-    }
-    const tch = teachers.find((t) => t.id === a.teacher_id) || {
-      id: a.teacher_id,
-      full_name: "Diriginte nealocat",
-      email: null,
-      phone: null,
-      created_at: new Date().toISOString(),
-    }
-    return {
-      ...a,
-      class: cls,
-      teacher: tch,
+  return classes.map((cls) => {
+    const assign = assignments.find((a) => a.class_id === cls.id)
+    if (assign) {
+      const tch = teachers.find((t) => t.id === assign.teacher_id) || {
+        id: assign.teacher_id,
+        full_name: "Diriginte nealocat",
+        email: null,
+        phone: null,
+        created_at: new Date().toISOString(),
+      }
+      return {
+        ...assign,
+        class: cls,
+        teacher: tch,
+      }
+    } else {
+      return {
+        id: "unassigned-" + cls.id,
+        class_id: cls.id,
+        teacher_id: "",
+        pin: "—",
+        token: "",
+        status: "asteptare" as AssignmentStatus,
+        invited_at: null,
+        submitted_at: null,
+        created_at: cls.created_at || new Date().toISOString(),
+        class: cls,
+        teacher: {
+          id: "",
+          full_name: "Diriginte nealocat",
+          email: null,
+          phone: null,
+          created_at: new Date().toISOString(),
+        },
+      }
     }
   })
 }
