@@ -44,6 +44,7 @@ export interface StudentRow {
   assignment_id: string
   position: number
   full_name: string
+  general_notes?: string
   created_at: string
 }
 
