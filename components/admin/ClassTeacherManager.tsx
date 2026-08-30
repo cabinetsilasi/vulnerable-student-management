@@ -13,7 +13,7 @@ interface ClassTeacherManagerProps {
   categories?: FormCategory[]
   submissions?: Record<string, StudentWithVulns[]>
   onSaveSubmission?: (assignmentId: string, students: StudentWithVulns[], isFinal: boolean) => Promise<void>
-  onAddClass: (name: string, grade: string, total: number) => Promise<void>
+  onAddClass: (name: string, grade: string, total: number, teacherId?: string) => Promise<void>
   onEditClass?: (id: string, name: string, grade: string, total: number, teacherId?: string) => Promise<void>
   onAddTeacher: (name: string, email: string, phone: string) => Promise<void>
   onEditTeacher?: (id: string, name: string, email: string, phone: string) => Promise<void>
@@ -59,6 +59,12 @@ export function ClassTeacherManager({
   const [classNameInput, setClassNameInput] = useState("")
   const [gradeInput, setGradeInput] = useState("V")
   const [totalEleviInput, setTotalEleviInput] = useState(25)
+  const [addClassTeacherId, setAddClassTeacherId] = useState("")
+
+  // Unassigned classes from full classes table
+  const unassignedClasses = classes.filter(
+    (c) => !assignments.some((a) => a.class_id === c.id || a.class?.id === c.id)
+  )
 
   const [teacherNameInput, setTeacherNameInput] = useState("")
   const [teacherEmailInput, setTeacherEmailInput] = useState("")
@@ -95,8 +101,9 @@ export function ClassTeacherManager({
     e.preventDefault()
     if (!classNameInput.trim()) return
     try {
-      await onAddClass(classNameInput.trim(), gradeInput, Number(totalEleviInput) || 25)
+      await onAddClass(classNameInput.trim(), gradeInput, Number(totalEleviInput) || 25, addClassTeacherId || undefined)
       setClassNameInput("")
+      setAddClassTeacherId("")
       setShowAddClass(false)
     } catch (err: any) {
       alert("❌ Eroare la crearea clasei: " + (err?.message || "Operațiunea a eșuat."))
@@ -209,8 +216,12 @@ export function ClassTeacherManager({
           </button>
           <button
             onClick={() => {
-              if (classes.length > 0 && !selectedClassId) setSelectedClassId(classes[0].id)
-              if (teachers.length > 0 && !selectedTeacherId) setSelectedTeacherId(teachers[0].id)
+              if (unassignedClasses.length > 0) {
+                setSelectedClassId(unassignedClasses[0].id)
+              } else if (classes.length > 0) {
+                setSelectedClassId(classes[0].id)
+              }
+              if (teachers.length > 0) setSelectedTeacherId(teachers[0].id)
               setShowAssignModal(true)
             }}
             className="flex items-center gap-2 px-4 py-2 bg-teal-600 hover:bg-teal-500 text-white text-sm font-bold rounded-xl transition-all cursor-pointer shadow-sm"
@@ -220,6 +231,35 @@ export function ClassTeacherManager({
           </button>
         </div>
       </div>
+
+      {/* Banner for unassigned classes */}
+      {unassignedClasses.length > 0 && (
+        <div className="bg-amber-50 border border-amber-200 p-4 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-sm">
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 bg-amber-100 text-amber-800 rounded-xl font-bold">
+              <School className="w-5 h-5" />
+            </div>
+            <div>
+              <h4 className="text-sm font-bold text-amber-900">
+                Atenție: {unassignedClasses.length} {unassignedClasses.length === 1 ? "clasă neasociată" : "clase neasociate"} (fără diriginte)!
+              </h4>
+              <p className="text-xs text-amber-700 mt-0.5">
+                Clase existente în baza de date fără diriginte alocat: <strong className="font-semibold">{unassignedClasses.map((c) => c.name).join(", ")}</strong>
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={() => {
+              setSelectedClassId(unassignedClasses[0].id)
+              if (teachers.length > 0) setSelectedTeacherId(teachers[0].id)
+              setShowAssignModal(true)
+            }}
+            className="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold rounded-xl transition-all shadow-sm cursor-pointer whitespace-nowrap"
+          >
+            + Asociază Diriginte Acum
+          </button>
+        </div>
+      )}
 
       {/* Main Table of Assignments */}
       <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
@@ -362,6 +402,21 @@ export function ClassTeacherManager({
                   />
                 </div>
               </div>
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 mb-1">Diriginte Alocat (opțional)</label>
+                <select
+                  value={addClassTeacherId}
+                  onChange={(e) => setAddClassTeacherId(e.target.value)}
+                  className="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-teal-500/20 focus:outline-none font-semibold text-slate-900"
+                >
+                  <option value="">-- Fără diriginte (se poate aloca ulterior) --</option>
+                  {teachers.map((t) => (
+                    <option key={t.id} value={t.id}>
+                      {t.full_name} {t.email ? `(${t.email})` : ""}
+                    </option>
+                  ))}
+                </select>
+              </div>
               <div className="flex justify-end gap-2 pt-2">
                 <button
                   type="button"
@@ -446,19 +501,22 @@ export function ClassTeacherManager({
             </p>
             <form onSubmit={handleAssignPair} className="space-y-4">
               <div>
-                <label className="block text-xs font-semibold text-slate-600 mb-1">1. Selectează Clasa</label>
+                <label className="block text-xs font-semibold text-slate-600 mb-1">1. Selectează Clasa (Toate clasele din Supabase)</label>
                 <select
                   value={selectedClassId}
                   onChange={(e) => setSelectedClassId(e.target.value)}
                   className="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-teal-500/20 focus:outline-none font-semibold text-slate-900"
                   required
                 >
-                  <option value="">-- Selectează clasa din Supabase --</option>
-                  {classes.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.name} ({c.total_students} elevi)
-                    </option>
-                  ))}
+                  <option value="">-- Selectează o clasă existentă --</option>
+                  {classes.map((c) => {
+                    const isAssigned = assignments.some((a) => a.class_id === c.id || a.class?.id === c.id)
+                    return (
+                      <option key={c.id} value={c.id}>
+                        {c.name} ({c.total_students} elevi) {isAssigned ? "— [Alocată deja]" : "— ⚠️ FĂRĂ DIRIGINTE"}
+                      </option>
+                    )
+                  })}
                 </select>
               </div>
               <div>

@@ -256,8 +256,11 @@ export default function AdminPage() {
               await saveAssignmentSubmission(assignmentId, updatedStudents, isFinal)
               await refreshData()
             }}
-            onAddClass={async (name, grade, total) => {
-              await addClass(name, grade, total)
+            onAddClass={async (name, grade, total, teacherId) => {
+              const newCls = await addClass(name, grade, total)
+              if (teacherId && newCls?.id) {
+                await assignTeacherToClass(newCls.id, teacherId)
+              }
               await refreshData()
             }}
             onEditClass={async (id, name, grade, total, teacherId) => {
