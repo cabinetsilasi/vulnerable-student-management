@@ -293,8 +293,7 @@ export function ClassTeacherManager({
               ) : (
                 classes.map((cls) => {
                   const assign = assignments.find((a) => a.class_id === cls.id || a.class?.id === cls.id)
-                  const isRealAssignment = assign && !assign.id.startsWith("unassigned-") && assign.teacher_id
-                  if (isRealAssignment) {
+                  if (assign) {
                     return (
                       <tr key={cls.id} className="hover:bg-slate-50/80 transition-colors">
                         <td className="p-4 font-bold text-slate-900">{assign.class.name}</td>

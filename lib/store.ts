@@ -456,41 +456,25 @@ export async function deleteCategory(id: string): Promise<void> {
 export async function getAssignmentsWithRelations(): Promise<AssignmentWithRelations[]> {
   const data = await getStoreData()
   const { assignments, classes, teachers } = data
-  return classes.map((cls) => {
-    const assign = assignments.find((a) => a.class_id === cls.id)
-    if (assign) {
-      const tch = teachers.find((t) => t.id === assign.teacher_id) || {
-        id: assign.teacher_id,
-        full_name: "Diriginte nealocat",
-        email: null,
-        phone: null,
-        created_at: new Date().toISOString(),
-      }
-      return {
-        ...assign,
-        class: cls,
-        teacher: tch,
-      }
-    } else {
-      return {
-        id: "unassigned-" + cls.id,
-        class_id: cls.id,
-        teacher_id: "",
-        pin: "—",
-        token: "",
-        status: "asteptare" as AssignmentStatus,
-        invited_at: null,
-        submitted_at: null,
-        created_at: cls.created_at || new Date().toISOString(),
-        class: cls,
-        teacher: {
-          id: "",
-          full_name: "Diriginte nealocat",
-          email: null,
-          phone: null,
-          created_at: new Date().toISOString(),
-        },
-      }
+  return assignments.map((a) => {
+    const cls = classes.find((c) => c.id === a.class_id) || {
+      id: a.class_id,
+      name: "Clasă necunoscută",
+      grade_level: null,
+      total_students: 0,
+      created_at: new Date().toISOString(),
+    }
+    const tch = teachers.find((t) => t.id === a.teacher_id) || {
+      id: a.teacher_id,
+      full_name: "Diriginte nealocat",
+      email: null,
+      phone: null,
+      created_at: new Date().toISOString(),
+    }
+    return {
+      ...a,
+      class: cls,
+      teacher: tch,
     }
   })
 }
