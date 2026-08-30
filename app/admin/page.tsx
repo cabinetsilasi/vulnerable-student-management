@@ -285,6 +285,7 @@ export default function AdminPage() {
               await assignTeacherToClass(classId, teacherId)
               await refreshData()
             }}
+            onRefreshData={refreshData}
             onBulkImport={async (rows) => {
               await importBulkData(rows)
               await refreshData()

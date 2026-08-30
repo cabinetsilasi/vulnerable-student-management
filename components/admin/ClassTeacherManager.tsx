@@ -21,6 +21,7 @@ interface ClassTeacherManagerProps {
   onBulkImport: (rows: Array<{ diriginte: string; email?: string; phone?: string; clasa: string; totalElevi?: number }>) => Promise<void>
   onDeleteClass: (id: string) => Promise<void>
   onDeleteTeacher: (id: string) => Promise<void>
+  onRefreshData?: () => Promise<void>
 }
 
 export function ClassTeacherManager({
@@ -38,6 +39,7 @@ export function ClassTeacherManager({
   onBulkImport,
   onDeleteClass,
   onDeleteTeacher,
+  onRefreshData,
 }: ClassTeacherManagerProps) {
   // Modal states
   const [showAddClass, setShowAddClass] = useState(false)
@@ -102,12 +104,43 @@ export function ClassTeacherManager({
     e.preventDefault()
     if (!classNameInput.trim()) return
     try {
-      await onAddClass(classNameInput.trim(), gradeInput, Number(totalEleviInput) || 25, addClassTeacherId || undefined)
+      const supabase = getServiceClient()
+      if (!supabase) throw new Error("Supabase client not initialized")
+      
+      // Pasul 1: Inserare clasă
+      const { data: newCls, error: clsErr } = await supabase
+        .from("classes")
+        .insert({ name: classNameInput.trim(), grade_level: gradeInput, total_students: Number(totalEleviInput) || 25 })
+        .select()
+        .single()
+        
+      if (clsErr) throw new Error(clsErr.message || "Eroare la crearea clasei în Supabase")
+      if (!newCls || !newCls.id) throw new Error("Baza de date nu a returnat un ID valid pentru clasă")
+
+      // Pasul 2 și 3: Inserare asociere DUPĂ ce avem ID-ul clasei
+      if (addClassTeacherId) {
+        const { error: asgErr } = await supabase
+          .from("assignments")
+          .insert({
+            class_id: newCls.id,
+            teacher_id: addClassTeacherId,
+            pin: Math.floor(1000 + Math.random() * 9000).toString(),
+            token: crypto.randomUUID(),
+            status: "asteptare"
+          })
+        if (asgErr) {
+          alert("Atenție: Clasa a fost creată cu succes, dar alocarea dirigintelui a eșuat: " + asgErr.message)
+        }
+      }
+
       setClassNameInput("")
       setAddClassTeacherId("")
       setShowAddClass(false)
+      
+      // La final, reîmprospătăm datele
+      if (onRefreshData) await onRefreshData()
     } catch (err: any) {
-      alert("❌ Eroare la crearea clasei: " + (err?.message || "Operațiunea a eșuat."))
+      alert("❌ Eroare: " + (err?.message || "Operațiunea a eșuat."))
     }
   }
 
@@ -115,14 +148,45 @@ export function ClassTeacherManager({
     e.preventDefault()
     if (!teacherNameInput.trim()) return
     try {
-      await onAddTeacher(teacherNameInput.trim(), teacherEmailInput.trim(), teacherPhoneInput.trim(), addTeacherClassId || undefined)
+      const supabase = getServiceClient()
+      if (!supabase) throw new Error("Supabase client not initialized")
+
+      // Pasul 1: Inserare diriginte
+      const { data: newTch, error: tchErr } = await supabase
+        .from("teachers")
+        .insert({ full_name: teacherNameInput.trim(), email: teacherEmailInput.trim() || null, phone: teacherPhoneInput.trim() || null })
+        .select()
+        .single()
+        
+      if (tchErr) throw new Error(tchErr.message || "Eroare la crearea cadrului didactic")
+      if (!newTch || !newTch.id) throw new Error("Baza de date nu a returnat un ID valid pentru diriginte")
+
+      // Pasul 2 și 3: Inserare asociere DUPĂ ce avem ID-ul dirigintelui
+      if (addTeacherClassId) {
+        const { error: asgErr } = await supabase
+          .from("assignments")
+          .insert({
+            class_id: addTeacherClassId,
+            teacher_id: newTch.id,
+            pin: Math.floor(1000 + Math.random() * 9000).toString(),
+            token: crypto.randomUUID(),
+            status: "asteptare"
+          })
+        if (asgErr) {
+          alert("Atenție: Dirigintele a fost creat cu succes, dar alocarea clasei a eșuat: " + asgErr.message)
+        }
+      }
+
       setTeacherNameInput("")
       setTeacherEmailInput("")
       setTeacherPhoneInput("")
       setAddTeacherClassId("")
       setShowAddTeacher(false)
+      
+      // La final, reîmprospătăm datele
+      if (onRefreshData) await onRefreshData()
     } catch (err: any) {
-      alert("❌ Eroare la adăugarea cadrului didactic: " + (err?.message || "Operațiunea a eșuat."))
+      alert("❌ Eroare: " + (err?.message || "Operațiunea a eșuat."))
     }
   }
 
@@ -130,10 +194,25 @@ export function ClassTeacherManager({
     e.preventDefault()
     if (!selectedClassId || !selectedTeacherId) return
     try {
-      await onAssign(selectedClassId, selectedTeacherId)
+      const supabase = getServiceClient()
+      if (!supabase) throw new Error("Supabase client not initialized")
+
+      const { error: asgErr } = await supabase
+        .from("assignments")
+        .insert({
+          class_id: selectedClassId,
+          teacher_id: selectedTeacherId,
+          pin: Math.floor(1000 + Math.random() * 9000).toString(),
+          token: crypto.randomUUID(),
+          status: "asteptare"
+        })
+
+      if (asgErr) throw new Error(asgErr.message || "Eroare la inserarea în baza de date")
+      
       setShowAssignModal(false)
+      if (onRefreshData) await onRefreshData()
     } catch (err: any) {
-      alert("❌ Eroare la crearea asocierii în baza de date: " + (err?.message || "Operațiunea a eșuat."))
+      alert("❌ Eroare: " + (err?.message || "Operațiunea a eșuat."))
     }
   }
 
