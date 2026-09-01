@@ -14,7 +14,7 @@ interface ClassTeacherManagerProps {
   submissions?: Record<string, StudentWithVulns[]>
   onSaveSubmission?: (assignmentId: string, students: StudentWithVulns[], isFinal: boolean) => Promise<void>
   onAddClass: (name: string, grade: string, total: number, teacherId?: string) => Promise<void>
-  onEditClass?: (id: string, name: string, grade: string, total: number, teacherId?: string) => Promise<void>
+  onEditClass?: (id: string, name: string, grade: string, total: number, teacherId?: string, pastedStudents?: string[]) => Promise<void>
   onAddTeacher: (name: string, email: string, phone: string, classId?: string) => Promise<void>
   onEditTeacher?: (id: string, name: string, email: string, phone: string) => Promise<void>
   onAssign: (classId: string, teacherId: string) => Promise<void>
@@ -56,6 +56,7 @@ export function ClassTeacherManager({
   const [editGrade, setEditGrade] = useState("V")
   const [editTotalElevi, setEditTotalElevi] = useState(25)
   const [editTeacherId, setEditTeacherId] = useState("")
+  const [editPastedStudents, setEditPastedStudents] = useState("")
 
   // Form states
   const [classNameInput, setClassNameInput] = useState("")
@@ -84,6 +85,7 @@ export function ClassTeacherManager({
     setEditGrade(cls.grade_level || "V")
     setEditTotalElevi(cls.total_students || 25)
     setEditTeacherId(currentTeacherId || "")
+    setEditPastedStudents("")
     setShowEditClassModal(true)
   }
 
@@ -92,7 +94,8 @@ export function ClassTeacherManager({
     if (!editingClassId || !editClassName.trim()) return
     try {
       if (onEditClass) {
-        await onEditClass(editingClassId, editClassName.trim(), editGrade, Number(editTotalElevi) || 25, editTeacherId || undefined)
+        const parsedStudents = editPastedStudents.split("\n").map(s => s.trim()).filter(s => s.length > 0)
+        await onEditClass(editingClassId, editClassName.trim(), editGrade, Number(editTotalElevi) || 25, editTeacherId || undefined, parsedStudents)
       }
       setShowEditClassModal(false)
     } catch (err: any) {
@@ -104,41 +107,12 @@ export function ClassTeacherManager({
     e.preventDefault()
     if (!classNameInput.trim()) return
     try {
-      const supabase = getServiceClient()
-      if (!supabase) throw new Error("Supabase client not initialized")
+      await onAddClass(classNameInput.trim(), gradeInput, Number(totalEleviInput) || 25, addClassTeacherId || undefined)
       
-      // Pasul 1: Inserare clasă
-      const { data: newCls, error: clsErr } = await supabase
-        .from("classes")
-        .insert({ name: classNameInput.trim(), grade_level: gradeInput, total_students: Number(totalEleviInput) || 25 })
-        .select()
-        .single()
-        
-      if (clsErr) throw new Error(clsErr.message || "Eroare la crearea clasei în Supabase")
-      if (!newCls || !newCls.id) throw new Error("Baza de date nu a returnat un ID valid pentru clasă")
-
-      // Pasul 2 și 3: Inserare asociere DUPĂ ce avem ID-ul clasei
-      if (addClassTeacherId) {
-        const { error: asgErr } = await supabase
-          .from("assignments")
-          .insert({
-            class_id: newCls.id,
-            teacher_id: addClassTeacherId,
-            pin: Math.floor(1000 + Math.random() * 9000).toString(),
-            token: crypto.randomUUID(),
-            status: "asteptare"
-          })
-        if (asgErr) {
-          alert("Atenție: Clasa a fost creată cu succes, dar alocarea dirigintelui a eșuat: " + asgErr.message)
-        }
-      }
-
       setClassNameInput("")
       setAddClassTeacherId("")
       setShowAddClass(false)
       
-      // La final, reîmprospătăm datele
-      if (onRefreshData) await onRefreshData()
     } catch (err: any) {
       alert("❌ Eroare: " + (err?.message || "Operațiunea a eșuat."))
     }
@@ -148,34 +122,7 @@ export function ClassTeacherManager({
     e.preventDefault()
     if (!teacherNameInput.trim()) return
     try {
-      const supabase = getServiceClient()
-      if (!supabase) throw new Error("Supabase client not initialized")
-
-      // Pasul 1: Inserare diriginte
-      const { data: newTch, error: tchErr } = await supabase
-        .from("teachers")
-        .insert({ full_name: teacherNameInput.trim(), email: teacherEmailInput.trim() || null, phone: teacherPhoneInput.trim() || null })
-        .select()
-        .single()
-        
-      if (tchErr) throw new Error(tchErr.message || "Eroare la crearea cadrului didactic")
-      if (!newTch || !newTch.id) throw new Error("Baza de date nu a returnat un ID valid pentru diriginte")
-
-      // Pasul 2 și 3: Inserare asociere DUPĂ ce avem ID-ul dirigintelui
-      if (addTeacherClassId) {
-        const { error: asgErr } = await supabase
-          .from("assignments")
-          .insert({
-            class_id: addTeacherClassId,
-            teacher_id: newTch.id,
-            pin: Math.floor(1000 + Math.random() * 9000).toString(),
-            token: crypto.randomUUID(),
-            status: "asteptare"
-          })
-        if (asgErr) {
-          alert("Atenție: Dirigintele a fost creat cu succes, dar alocarea clasei a eșuat: " + asgErr.message)
-        }
-      }
+      await onAddTeacher(teacherNameInput.trim(), teacherEmailInput.trim(), teacherPhoneInput.trim(), addTeacherClassId || undefined)
 
       setTeacherNameInput("")
       setTeacherEmailInput("")
@@ -183,8 +130,6 @@ export function ClassTeacherManager({
       setAddTeacherClassId("")
       setShowAddTeacher(false)
       
-      // La final, reîmprospătăm datele
-      if (onRefreshData) await onRefreshData()
     } catch (err: any) {
       alert("❌ Eroare: " + (err?.message || "Operațiunea a eșuat."))
     }
@@ -194,23 +139,8 @@ export function ClassTeacherManager({
     e.preventDefault()
     if (!selectedClassId || !selectedTeacherId) return
     try {
-      const supabase = getServiceClient()
-      if (!supabase) throw new Error("Supabase client not initialized")
-
-      const { error: asgErr } = await supabase
-        .from("assignments")
-        .insert({
-          class_id: selectedClassId,
-          teacher_id: selectedTeacherId,
-          pin: Math.floor(1000 + Math.random() * 9000).toString(),
-          token: crypto.randomUUID(),
-          status: "asteptare"
-        })
-
-      if (asgErr) throw new Error(asgErr.message || "Eroare la inserarea în baza de date")
-      
+      await onAssign(selectedClassId, selectedTeacherId)
       setShowAssignModal(false)
-      if (onRefreshData) await onRefreshData()
     } catch (err: any) {
       alert("❌ Eroare: " + (err?.message || "Operațiunea a eșuat."))
     }
@@ -836,6 +766,18 @@ export function ClassTeacherManager({
                     </option>
                   ))}
                 </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 mb-1">Adaugă elevi rapid (Copy & Paste)</label>
+                <textarea
+                  placeholder="Inserați lista de elevi (unul pe rând)...&#10;Popescu Ion&#10;Ionescu Maria"
+                  value={editPastedStudents}
+                  onChange={(e) => setEditPastedStudents(e.target.value)}
+                  rows={4}
+                  className="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-teal-500/20 focus:outline-none text-slate-900 resize-y"
+                />
+                <p className="text-[10px] text-slate-500 mt-1">Elevii inserați vor fi adăugați automat la efectivul clasei în baza de date.</p>
               </div>
 
               <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">

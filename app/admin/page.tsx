@@ -22,6 +22,7 @@ import {
   resetToDefaultSeed,
   SCHOOL_INFO,
   getStudentsForAssignment,
+  addStudentsToAssignment,
 } from "@/lib/store"
 import { AssignmentWithRelations, ClassRow, FormCategory, TeacherRow, StudentWithVulns } from "@/lib/types"
 import { OverviewDashboard } from "@/components/admin/OverviewDashboard"
@@ -263,10 +264,17 @@ export default function AdminPage() {
               }
               await refreshData()
             }}
-            onEditClass={async (id, name, grade, total, teacherId) => {
+            onEditClass={async (id, name, grade, total, teacherId, pastedStudents) => {
               await updateClass(id, name, grade, total)
+              let assign = null
               if (teacherId) {
-                await assignTeacherToClass(id, teacherId)
+                assign = await assignTeacherToClass(id, teacherId)
+              } else {
+                const store = await getStoreData()
+                assign = store.assignments.find(a => a.class_id === id) || null
+              }
+              if (assign && pastedStudents && pastedStudents.length > 0) {
+                await addStudentsToAssignment(assign.id, pastedStudents)
               }
               await refreshData()
             }}

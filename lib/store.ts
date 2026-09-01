@@ -677,6 +677,52 @@ export async function getStudentsForAssignment(assignmentId: string): Promise<St
   return memoryState.submissions[assignmentId] || []
 }
 
+export async function addStudentsToAssignment(assignmentId: string, studentNames: string[]): Promise<void> {
+  const supabase = getServiceClient()
+  const validNames = studentNames.map(n => n.trim()).filter(n => n.length > 0)
+  if (validNames.length === 0) return
+
+  if (supabase) {
+    try {
+      // Find current max position
+      const { data: existing } = await supabase.from("students").select("position").eq("assignment_id", assignmentId).order("position", { ascending: false }).limit(1)
+      let currentMaxPos = (existing && existing.length > 0) ? existing[0].position : 0
+
+      for (const name of validNames) {
+        currentMaxPos++
+        await supabase
+          .from("students")
+          .insert({ assignment_id: assignmentId, position: currentMaxPos, full_name: name })
+      }
+    } catch (e) {
+      console.warn("Supabase add students error:", e)
+    }
+  }
+  
+  // Update memory state
+  const currentStudents = memoryState.submissions[assignmentId] || []
+  let pos = currentStudents.length > 0 ? Math.max(...currentStudents.map(s => s.position)) : 0
+  const newStudents: StudentWithVulns[] = validNames.map(name => {
+    pos++
+    return {
+      id: "s-" + Math.random().toString(36).substr(2, 7),
+      assignment_id: assignmentId,
+      position: pos,
+      full_name: name,
+      created_at: new Date().toISOString(),
+      vulnerabilities: []
+    }
+  })
+  
+  saveStoreState({
+    ...memoryState,
+    submissions: {
+      ...memoryState.submissions,
+      [assignmentId]: [...currentStudents, ...newStudents]
+    }
+  })
+}
+
 export async function saveAssignmentSubmission(
   assignmentId: string,
   students: StudentWithVulns[],
