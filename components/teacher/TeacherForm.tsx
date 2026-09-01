@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { AssignmentWithRelations, FormCategory, StudentWithVulns, StudentVulnerability } from "@/lib/types"
 import { SCHOOL_INFO } from "@/lib/store"
 import { Plus, Trash2, Save, Send, CheckCircle2, ShieldAlert, ArrowLeft, Info, HelpCircle, Maximize2, Minimize2, Check, FileText, Printer } from "lucide-react"
@@ -28,8 +28,62 @@ export function TeacherForm({
   const [saveStatus, setSaveStatus] = useState<"saved" | "saving" | "idle">("idle")
   const [showConfirmModal, setShowConfirmModal] = useState(false)
   const [isFullscreen, setIsFullscreen] = useState(false)
+  
+  const tableContainerRef = useRef<HTMLDivElement>(null)
 
   const isCompleted = assignment.status === "completat"
+
+  // Keyboard navigation & Horizontal Scroll handlers
+  useEffect(() => {
+    const container = tableContainerRef.current
+    if (!container) return
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Ignore if user is typing in an input
+      if (document.activeElement?.tagName === "INPUT" || document.activeElement?.tagName === "TEXTAREA") {
+        return
+      }
+
+      if (e.key === "ArrowRight") {
+        container.scrollBy({ left: 150, behavior: "smooth" })
+        e.preventDefault()
+      } else if (e.key === "ArrowLeft") {
+        container.scrollBy({ left: -150, behavior: "smooth" })
+        e.preventDefault()
+      }
+    }
+
+    const handleWheel = (e: WheelEvent) => {
+      if (e.shiftKey && e.deltaY !== 0) {
+        e.preventDefault()
+        container.scrollBy({ left: e.deltaY, behavior: "auto" })
+      }
+    }
+
+    const handleFocus = (e: FocusEvent) => {
+      if (e.target instanceof HTMLElement) {
+        const targetRect = e.target.getBoundingClientRect()
+        const containerRect = container.getBoundingClientRect()
+        // Approximate width of the sticky columns (Nr + Nume = ~230px)
+        const stickyWidth = 230
+        
+        // If element is hidden under the sticky column on the left
+        if (targetRect.left < containerRect.left + stickyWidth) {
+          container.scrollBy({ left: targetRect.left - (containerRect.left + stickyWidth) - 20, behavior: "smooth" })
+        }
+      }
+    }
+
+    window.addEventListener("keydown", handleKeyDown)
+    container.addEventListener("wheel", handleWheel, { passive: false })
+    container.addEventListener("focus", handleFocus, true)
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown)
+      container.removeEventListener("wheel", handleWheel)
+      container.removeEventListener("focus", handleFocus, true)
+    }
+  }, [isFullscreen])
 
   // Auto-save draft mechanism (debounced 1.2s)
   useEffect(() => {
@@ -321,7 +375,10 @@ export function TeacherForm({
           </div>
         )}
 
-        <div className="overflow-x-auto flex-1 bg-white rounded-2xl border border-slate-200 print:overflow-visible print:border-none print:rounded-none">
+        <div 
+          ref={tableContainerRef}
+          className="overflow-x-auto flex-1 bg-white rounded-2xl border border-slate-200 print:overflow-visible print:border-none print:rounded-none"
+        >
           <table className="w-full text-left text-xs border-collapse print:table-fixed print:w-full print:text-[8pt]">
             <thead>
               <tr className="bg-gradient-to-r from-teal-700 via-teal-600 to-indigo-700 text-white shadow-sm border-b border-teal-800/40 print:bg-slate-100 print:text-black print:border-slate-400">
