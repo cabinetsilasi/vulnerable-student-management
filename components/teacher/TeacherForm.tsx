@@ -27,7 +27,6 @@ export function TeacherForm({
   const [students, setStudents] = useState<StudentWithVulns[]>(initialStudents)
   const [saveStatus, setSaveStatus] = useState<"saved" | "saving" | "idle">("idle")
   const [showConfirmModal, setShowConfirmModal] = useState(false)
-  const [isFullscreen, setIsFullscreen] = useState(false)
   
   const tableContainerRef = useRef<HTMLDivElement>(null)
 
@@ -83,7 +82,7 @@ export function TeacherForm({
       container.removeEventListener("wheel", handleWheel)
       container.removeEventListener("focus", handleFocus, true)
     }
-  }, [isFullscreen])
+  }, [])
 
   // Auto-save draft mechanism (debounced 1.2s)
   useEffect(() => {
@@ -189,9 +188,9 @@ export function TeacherForm({
   }
 
   return (
-    <div className="printable-sheet max-w-7xl mx-auto px-4 py-8 space-y-6 print:p-0 print:m-0 print:max-w-none print:space-y-3">
+    <div className="printable-sheet w-full px-2 sm:px-4 py-4 space-y-4 print:p-0 print:m-0 print:max-w-none print:space-y-3">
       {/* Header Bar */}
-      <div className="bg-gradient-to-r from-teal-700 via-teal-600 to-indigo-700 text-white rounded-3xl p-6 sm:p-8 shadow-xl relative overflow-hidden print:bg-none print:text-black print:p-0 print:border-b-2 print:border-slate-800 print:rounded-none print:shadow-none">
+      <div className="bg-gradient-to-r from-teal-700 via-teal-600 to-indigo-700 text-white rounded-3xl p-4 sm:p-6 shadow-xl relative overflow-hidden print:bg-none print:text-black print:p-0 print:border-b-2 print:border-slate-800 print:rounded-none print:shadow-none">
         <div className="absolute -right-12 -bottom-12 w-64 h-64 bg-white/10 rounded-full blur-3xl pointer-events-none no-print"></div>
 
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 relative z-10 print:flex-row print:justify-between">
@@ -221,20 +220,20 @@ export function TeacherForm({
         </div>
 
         {/* Pre-filled Details Cards */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-6 pt-6 border-t border-white/20 text-xs print:grid-cols-4 print:gap-2 print:mt-2 print:pt-2 print:border-slate-300">
-          <div className="bg-white/15 p-3 rounded-2xl border border-white/20 backdrop-blur-md print:bg-slate-50 print:border-slate-300 print:p-1.5 print:rounded-lg">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-4 pt-4 border-t border-white/20 text-xs print:grid-cols-4 print:gap-2 print:mt-2 print:pt-2 print:border-slate-300">
+          <div className="bg-white/15 p-2 rounded-2xl border border-white/20 backdrop-blur-md print:bg-slate-50 print:border-slate-300 print:p-1.5 print:rounded-lg">
             <span className="text-teal-100/90 block font-medium print:text-slate-600 print:text-[7.5pt]">Clasă / Grupă:</span>
             <span className="text-white font-bold text-base mt-0.5 block print:text-black print:text-xs print:mt-0">{assignment.class.name}</span>
           </div>
-          <div className="bg-white/15 p-3 rounded-2xl border border-white/20 backdrop-blur-md print:bg-slate-50 print:border-slate-300 print:p-1.5 print:rounded-lg">
+          <div className="bg-white/15 p-2 rounded-2xl border border-white/20 backdrop-blur-md print:bg-slate-50 print:border-slate-300 print:p-1.5 print:rounded-lg">
             <span className="text-teal-100/90 block font-medium print:text-slate-600 print:text-[7.5pt]">Nr. Total Elevi:</span>
             <span className="text-white font-bold text-base mt-0.5 block print:text-black print:text-xs print:mt-0">{assignment.class.total_students} elevi</span>
           </div>
-          <div className="bg-white/15 p-3 rounded-2xl border border-white/20 backdrop-blur-md print:bg-slate-50 print:border-slate-300 print:p-1.5 print:rounded-lg">
-            <span className="text-teal-100/90 block font-medium print:text-slate-600 print:text-[7.5pt]">Cadru Didactic / Diriginte:</span>
+          <div className="bg-white/15 p-2 rounded-2xl border border-white/20 backdrop-blur-md print:bg-slate-50 print:border-slate-300 print:p-1.5 print:rounded-lg">
+            <span className="text-teal-100/90 block font-medium print:text-slate-600 print:text-[7.5pt]">Cadru Didactic:</span>
             <span className="text-white font-bold text-sm mt-0.5 block truncate print:text-black print:text-xs print:mt-0">{assignment.teacher.full_name}</span>
           </div>
-          <div className="bg-white/15 p-3 rounded-2xl border border-white/20 backdrop-blur-md print:bg-slate-50 print:border-slate-300 print:p-1.5 print:rounded-lg">
+          <div className="bg-white/15 p-2 rounded-2xl border border-white/20 backdrop-blur-md print:bg-slate-50 print:border-slate-300 print:p-1.5 print:rounded-lg">
             <span className="text-teal-100/90 block font-medium print:text-slate-600 print:text-[7.5pt]">Profesor Consilier:</span>
             <span className="text-white font-bold text-sm mt-0.5 block truncate print:text-black print:text-xs print:mt-0">{SCHOOL_INFO.consilier}</span>
           </div>
@@ -280,24 +279,6 @@ export function TeacherForm({
             </button>
 
             <button
-              onClick={() => setIsFullscreen(!isFullscreen)}
-              className="flex items-center gap-2 px-3.5 py-2 bg-gradient-to-r from-teal-50 to-indigo-50 hover:from-teal-100 hover:to-indigo-100 text-teal-900 text-xs font-bold rounded-xl border border-teal-200/80 shadow-sm transition-all cursor-pointer no-print"
-              title={isFullscreen ? "Restrânge tabelul" : "Extinde tabelul pe tot ecranul"}
-            >
-              {isFullscreen ? (
-                <>
-                  <Minimize2 className="w-4 h-4 text-teal-700" />
-                  <span>Restrânge Tabelul</span>
-                </>
-              ) : (
-                <>
-                  <Maximize2 className="w-4 h-4 text-teal-700" />
-                  <span>Extinde Ecran Complet</span>
-                </>
-              )}
-            </button>
-
-            <button
               onClick={handleAddStudentRow}
               className="flex items-center gap-2 px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold rounded-xl transition-all cursor-pointer no-print"
             >
@@ -317,63 +298,7 @@ export function TeacherForm({
       )}
 
       {/* Main Dynamic Table Container */}
-      <div
-        className={
-          isFullscreen
-            ? "fixed inset-0 z-50 bg-slate-950/95 backdrop-blur-2xl p-4 sm:p-6 flex flex-col justify-between overflow-hidden animate-in fade-in duration-200 print:static print:bg-white print:p-0 print:border-none print:overflow-visible"
-            : "bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden print:border-none print:rounded-none print:shadow-none print:overflow-visible"
-        }
-      >
-        {isFullscreen && (
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-gradient-to-r from-teal-800 via-teal-700 to-indigo-800 p-4 rounded-2xl text-white mb-4 shadow-lg shrink-0 no-print">
-            <div>
-              <div className="flex items-center gap-2 text-xs font-bold text-teal-200 uppercase tracking-wider">
-                <span>Mod Ecran Complet — {assignment.class.name}</span>
-                <span>•</span>
-                <span>{SCHOOL_INFO.unitate}</span>
-              </div>
-              <p className="text-xs text-teal-100/90 mt-0.5">
-                Completare extinsă pentru vizibilitate maximă pe toate coloanele
-              </p>
-            </div>
-
-            <div className="flex flex-wrap items-center gap-3">
-              <button
-                onClick={() => window.print()}
-                className="flex items-center gap-2 px-3.5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-xl shadow-md transition-all cursor-pointer"
-              >
-                <Printer className="w-4 h-4" />
-                Imprimă Fișa (A4)
-              </button>
-
-              <button
-                onClick={handleAddStudentRow}
-                disabled={isCompleted}
-                className="flex items-center gap-2 px-3.5 py-2 bg-white/15 hover:bg-white/25 text-white text-xs font-bold rounded-xl border border-white/20 transition-all cursor-pointer"
-              >
-                <Plus className="w-4 h-4 text-teal-300" />
-                Adaugă Elev în Fișă
-              </button>
-
-              <button
-                onClick={() => setShowConfirmModal(true)}
-                disabled={isCompleted}
-                className="flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-xl shadow-md transition-all cursor-pointer"
-              >
-                <Send className="w-4 h-4" />
-                Trimite Fișa
-              </button>
-
-              <button
-                onClick={() => setIsFullscreen(false)}
-                className="flex items-center gap-1.5 px-3.5 py-2 bg-rose-600/80 hover:bg-rose-600 text-white text-xs font-bold rounded-xl border border-rose-500/50 shadow-sm transition-all cursor-pointer"
-              >
-                <Minimize2 className="w-4 h-4" />
-                Restrânge Tabelul
-              </button>
-            </div>
-          </div>
-        )}
+      <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden print:border-none print:rounded-none print:shadow-none print:overflow-visible">
 
         <div 
           ref={tableContainerRef}
