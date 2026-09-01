@@ -731,9 +731,27 @@ export async function saveAssignmentSubmission(
   const supabase = getServiceClient()
   if (supabase) {
     try {
+      // Check if assignment is already completed (backend restriction)
+      const { data: existingAssignment } = await supabase
+        .from("assignments")
+        .select("status")
+        .eq("id", assignmentId)
+        .single()
+        
+      if (existingAssignment?.status === "completat") {
+        console.warn(`[Backend] Save rejected: Assignment ${assignmentId} is already completed.`)
+        throw new Error("Fișa este securizată și nu mai poate fi modificată.")
+      }
+
       const payload: any = { status: isFinalSubmission ? "completat" : undefined }
+      // Remove undefined keys to prevent erasing existing data if isFinalSubmission is false
+      if (payload.status === undefined) delete payload.status
+      
       if (isFinalSubmission) payload.submitted_at = new Date().toISOString()
-      await supabase.from("assignments").update(payload).eq("id", assignmentId)
+      
+      if (Object.keys(payload).length > 0) {
+        await supabase.from("assignments").update(payload).eq("id", assignmentId)
+      }
 
       for (const st of students) {
         if (!st.full_name.trim()) continue

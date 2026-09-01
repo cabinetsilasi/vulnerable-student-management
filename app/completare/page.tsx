@@ -81,8 +81,37 @@ function CompletareFormContent() {
     )
   }
 
-  // If valid assignment found, render TeacherForm
+  // If valid assignment found, render TeacherForm or Success Screen
   if (assignment) {
+    if (assignment.status === "completat") {
+      return (
+        <div className="min-h-screen bg-gradient-to-br from-teal-950 via-slate-900 to-indigo-950 text-white flex flex-col justify-center items-center p-4">
+          <div className="max-w-md w-full bg-slate-900/90 backdrop-blur-xl border border-teal-700/50 rounded-3xl p-8 shadow-2xl text-center space-y-4">
+            <div className="w-16 h-16 rounded-full bg-emerald-500/20 text-emerald-300 flex items-center justify-center mx-auto mb-2 border border-emerald-400/30">
+              <ShieldAlert className="w-8 h-8" />
+            </div>
+            <h2 className="text-2xl font-bold text-white">Fișă Securizată</h2>
+            <p className="text-teal-200/90 text-sm leading-relaxed">
+              Fișa a fost transmisă cu succes către cabinetul de consiliere și este acum securizată. 
+              Din motive de confidențialitate, datele nu mai pot fi vizualizate sau modificate din acest cont.
+            </p>
+            <p className="text-xs text-slate-400 mt-2">Vă mulțumim pentru colaborare!</p>
+            <div className="pt-4">
+              <button
+                onClick={() => {
+                  setAssignment(null)
+                  router.push("/")
+                }}
+                className="px-6 py-2.5 bg-teal-900/40 hover:bg-teal-800/60 text-teal-100 font-semibold rounded-xl border border-teal-700/50 transition-colors cursor-pointer"
+              >
+                Înapoi
+              </button>
+            </div>
+          </div>
+        </div>
+      )
+    }
+
     return (
       <div className="min-h-screen bg-slate-100 text-slate-900 pb-12">
         <TeacherForm
