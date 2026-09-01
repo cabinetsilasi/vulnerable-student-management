@@ -737,9 +737,16 @@ export async function saveAssignmentSubmission(
 
       for (const st of students) {
         if (!st.full_name.trim()) continue
+        
+        const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(st.id)
+        const studentPayload: any = { assignment_id: assignmentId, position: st.position, full_name: st.full_name }
+        if (isUUID) {
+          studentPayload.id = st.id
+        }
+
         const { data: studentRecord } = await supabase
           .from("students")
-          .upsert({ assignment_id: assignmentId, position: st.position, full_name: st.full_name }, { onConflict: "id" })
+          .upsert(studentPayload, { onConflict: "id" })
           .select()
           .single()
 
