@@ -324,35 +324,37 @@ export function TeacherForm({
         <div className="overflow-x-auto flex-1 bg-white rounded-2xl border border-slate-200 print:overflow-visible print:border-none print:rounded-none">
           <table className="w-full text-left text-xs border-collapse print:table-fixed print:w-full print:text-[8pt]">
             <thead>
-              <tr className="bg-gradient-to-r from-teal-700 via-teal-600 to-indigo-700 text-white font-extrabold shadow-sm border-b border-teal-800/40 print:bg-slate-100 print:text-black print:border-slate-400">
-                <th className="p-4 w-12 text-center text-teal-100 print:w-[3%] print:p-1 print:text-black print:font-bold">Nr.</th>
-                <th className="p-4 min-w-[220px] text-white print:w-[18%] print:min-w-0 print:p-1 print:text-black print:font-bold">Numele și prenumele elevului</th>
+              <tr className="bg-gradient-to-r from-teal-700 via-teal-600 to-indigo-700 text-white shadow-sm border-b border-teal-800/40 print:bg-slate-100 print:text-black print:border-slate-400">
+                <th className="p-2 w-10 text-center text-teal-100 text-xs font-semibold print:w-[3%] print:p-1 print:text-black print:font-bold">Nr.</th>
+                <th className="p-2 min-w-[180px] text-white text-xs font-semibold sticky left-0 z-20 bg-teal-700 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.3)] print:static print:shadow-none print:w-[18%] print:min-w-0 print:p-1 print:text-black print:font-bold">Numele și prenumele elevului</th>
                 {visibleCategories.map((cat) => (
-                  <th key={cat.id} className="p-4 min-w-[140px] text-center border-l border-white/20 print:p-1 print:min-w-0 print:border-slate-400 print:text-black print:font-bold">
-                    <div className="font-bold text-[11px] leading-snug text-white drop-shadow-sm print:text-[8pt] print:text-black print:drop-shadow-none">{cat.label}</div>
+                  <th key={cat.id} className="p-2 min-w-[110px] text-center border-l border-white/20 print:p-1 print:min-w-0 print:border-slate-400 print:text-black print:font-bold">
+                    <div className="font-semibold text-[10px] leading-snug text-white drop-shadow-sm print:text-[8pt] print:text-black print:drop-shadow-none">{cat.label}</div>
                   </th>
                 ))}
-                <th className="p-4 min-w-[220px] text-center border-l border-white/20 print:w-[16%] print:min-w-0 print:p-1 print:text-black print:font-bold">
-                  <div className="font-bold text-[11px] leading-snug text-white drop-shadow-sm print:text-[8pt] print:text-black print:drop-shadow-none">Observații / Detalii Situative</div>
+                <th className="p-2 min-w-[160px] text-center border-l border-white/20 print:w-[16%] print:min-w-0 print:p-1 print:text-black print:font-bold">
+                  <div className="font-semibold text-[10px] leading-snug text-white drop-shadow-sm print:text-[8pt] print:text-black print:drop-shadow-none">Observații / Detalii Situative</div>
                 </th>
-                {!isCompleted && <th className="p-4 w-12 text-center border-l border-white/20 no-print"></th>}
+                {!isCompleted && <th className="p-2 w-10 text-center border-l border-white/20 no-print"></th>}
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-200 print:divide-slate-400">
               {students.length === 0 ? (
                 <tr>
-                  <td colSpan={visibleCategories.length + 4} className="p-12 text-center text-slate-400 print:p-4 print:text-black">
+                  <td colSpan={visibleCategories.length + 4} className="p-8 text-center text-slate-400 print:p-4 print:text-black">
                     <p className="text-sm font-medium print:text-xs">Nu a fost adăugat niciun elev în această clasă.</p>
                   </td>
                 </tr>
               ) : (
-                students.map((student, idx) => (
-                  <tr key={student.id} className="hover:bg-slate-50/80 transition-colors">
+                students.map((student, idx) => {
+                  const isEven = idx % 2 === 1
+                  return (
+                  <tr key={student.id} className={`group transition-colors ${isEven ? "bg-emerald-50/40" : "bg-white"} hover:bg-teal-100/50`}>
                     {/* Index */}
-                    <td className="p-4 text-center font-bold text-slate-400 print:p-1 print:text-black print:text-xs">{idx + 1}</td>
+                    <td className="p-2 text-center font-bold text-slate-400 print:p-1 print:text-black print:text-xs">{idx + 1}</td>
 
                     {/* Student Name Input */}
-                    <td className="p-3 print:p-1">
+                    <td className={`p-2 sticky left-0 z-20 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)] print:static print:shadow-none print:p-1 ${isEven ? "bg-[#f2fdf7]" : "bg-white"} group-hover:bg-[#dff7f2]`}>
                       {isCompleted ? (
                         <span className="font-bold text-slate-900 text-sm print:text-xs print:text-black">{student.full_name || "—"}</span>
                       ) : (
@@ -361,7 +363,7 @@ export function TeacherForm({
                           placeholder="ex: Popescu Andrei"
                           value={student.full_name}
                           onChange={(e) => handleNameChange(student.id, e.target.value)}
-                          className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-teal-500/20 focus:outline-none font-semibold text-slate-900 print:bg-transparent print:border-none print:p-0 print:text-xs print:text-black"
+                          className="w-full px-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-teal-500/20 focus:outline-none font-semibold text-slate-900 print:bg-transparent print:border-none print:p-0 print:text-xs print:text-black"
                         />
                       )}
                     </td>
@@ -373,7 +375,7 @@ export function TeacherForm({
                       const notes = vuln?.notes || ""
 
                       return (
-                        <td key={cat.id} className="p-3 text-center border-l border-slate-100 bg-slate-50/30 print:p-1 print:border-slate-400 print:bg-transparent">
+                        <td key={cat.id} className="p-2 text-center border-l border-slate-100 bg-transparent print:p-1 print:border-slate-400">
                           <div className="flex flex-col items-center gap-1.5 print:gap-0.5">
                             {/* Colorful Custom Checkbox */}
                             <button
@@ -417,23 +419,23 @@ export function TeacherForm({
                     })}
 
                     {/* General Observații / Detalii Column */}
-                    <td className="p-3 border-l border-slate-100 bg-slate-50/20 print:p-1 print:border-slate-400 print:bg-transparent">
+                    <td className="p-2 border-l border-slate-100 bg-transparent print:p-1 print:border-slate-400">
                       {isCompleted ? (
                         <span className="text-xs text-slate-700 font-medium italic print:text-[8pt] print:text-black print:not-italic">{student.general_notes || "—"}</span>
                       ) : (
                         <input
                           type="text"
-                          placeholder="Detalii familie, remigrare, alte situații..."
+                          placeholder="Detalii familie..."
                           value={student.general_notes || ""}
                           onChange={(e) => handleGeneralNotesChange(student.id, e.target.value)}
-                          className="w-full px-3 py-2 text-xs bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-teal-500/20 focus:outline-none font-medium text-slate-900 print:bg-transparent print:border-none print:p-0 print:text-[8pt] print:text-black"
+                          className="w-full px-3 py-1.5 text-xs bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-teal-500/20 focus:outline-none font-medium text-slate-900 print:bg-transparent print:border-none print:p-0 print:text-[8pt] print:text-black"
                         />
                       )}
                     </td>
 
                     {/* Delete Row Button */}
                     {!isCompleted && (
-                      <td className="p-3 text-center border-l border-slate-100 no-print">
+                      <td className="p-2 text-center border-l border-slate-100 bg-transparent no-print">
                         <button
                           onClick={() => handleRemoveStudentRow(student.id)}
                           className="p-1.5 hover:bg-rose-50 rounded-lg text-slate-400 hover:text-rose-600 transition-colors cursor-pointer"
@@ -444,7 +446,8 @@ export function TeacherForm({
                       </td>
                     )}
                   </tr>
-                ))
+                  )
+                })
               )}
             </tbody>
           </table>
