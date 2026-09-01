@@ -66,12 +66,28 @@ export function EmailDispatchCenter({ assignments, onUpdateStatus }: EmailDispat
         }),
       })
 
-      const data = await res.json()
-      if (res.ok && data.success) {
+      console.log("Response status:", res.status)
+      const text = await res.text()
+      console.log("Response text:", text)
+
+      if (!res.ok) {
+        setSendStatusMessage(`❌ Eroare server HTTP ${res.status}: ${text}`)
+        return
+      }
+
+      let data
+      try {
+        data = JSON.parse(text)
+      } catch (err) {
+        setSendStatusMessage(`❌ Răspuns invalid de la server: ${text}`)
+        return
+      }
+
+      if (data.success) {
         await onUpdateStatus(assign.id, "trimis", true)
         setSendStatusMessage(
           data.simulated
-            ? `Simulare trimitere reușită către ${assign.teacher.email} (API Resend neconfigurat)`
+            ? `Simulare trimitere reușită către ${assign.teacher.email} (API neconfigurat)`
             : `Email trimis cu succes către ${assign.teacher.email}!`
         )
       } else {
@@ -93,7 +109,7 @@ export function EmailDispatchCenter({ assignments, onUpdateStatus }: EmailDispat
       if (assign.teacher.email && assign.status !== "completat") {
         try {
           const link = getFullLink(assign.token)
-          await fetch("/api/send-email", {
+          const res = await fetch("/api/send-email", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -105,8 +121,26 @@ export function EmailDispatchCenter({ assignments, onUpdateStatus }: EmailDispat
               customSubject: subjectTemplate.replace("{CLASA}", assign.class.name),
             }),
           })
-          await onUpdateStatus(assign.id, "trimis", true)
-          count++
+          
+          console.log(`[Batch] Response status for ${assign.teacher.email}:`, res.status)
+          const text = await res.text()
+          console.log(`[Batch] Response text for ${assign.teacher.email}:`, text)
+
+          if (res.ok) {
+            try {
+              const data = JSON.parse(text)
+              if (data.success) {
+                await onUpdateStatus(assign.id, "trimis", true)
+                count++
+              } else {
+                 console.error(`Eroare logica la ${assign.teacher.email}:`, data.error)
+              }
+            } catch (err) {
+              console.error(`Răspuns invalid la ${assign.teacher.email}:`, text)
+            }
+          } else {
+            console.error(`Eroare HTTP la ${assign.teacher.email}: ${res.status} ${text}`)
+          }
         } catch (e) {
           console.error(e)
         }
