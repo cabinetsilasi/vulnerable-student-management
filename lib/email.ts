@@ -64,7 +64,7 @@ export async function sendTeacherInvite(params: EmailInviteParams): Promise<{ su
     try {
       const resend = new Resend(resendApiKey)
       await resend.emails.send({
-        from: "Cabinet Consiliere <noreply@resend.dev>",
+        from: "Cabinet Consiliere <onboarding@resend.dev>",
         to: toEmail,
         subject: subject,
         html: bodyHtml,
