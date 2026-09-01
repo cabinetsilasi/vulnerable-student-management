@@ -28,6 +28,8 @@ function CompletareFormContent() {
   const [pinInput, setPinInput] = useState(pinParam)
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
 
+  const [tokenContext, setTokenContext] = useState<AssignmentWithRelations | null>(null)
+
   const loadAssignmentData = async (queryStr: string) => {
     if (!queryStr.trim()) {
       setLoading(false)
@@ -44,16 +46,20 @@ function CompletareFormContent() {
       setCategories(cats)
       setStudents(existingStudents)
     } else {
-      setErrorMsg("Cod PIN sau link de acces invalid. Verificați din nou credențialele primite.")
+      setErrorMsg("Cod PIN invalid. Verificați din nou credențialele primite.")
       setAssignment(null)
     }
     setLoading(false)
   }
 
   useEffect(() => {
-    const initialQuery = tokenParam || pinParam
-    if (initialQuery) {
-      loadAssignmentData(initialQuery)
+    if (pinParam) {
+      loadAssignmentData(pinParam)
+    } else if (tokenParam) {
+      getAssignmentByPinOrToken(tokenParam).then((found) => {
+        if (found) setTokenContext(found)
+        setLoading(false)
+      })
     } else {
       setLoading(false)
     }
@@ -126,7 +132,13 @@ function CompletareFormContent() {
             <Key className="w-6 h-6 text-teal-300" />
           </div>
           <h2 className="text-xl font-extrabold text-white">Acces Formular Diriginte</h2>
-          <p className="text-xs text-teal-200/80">
+          {tokenContext && (
+            <div className="bg-teal-900/40 border border-teal-500/30 rounded-lg p-3 my-4">
+              <p className="text-sm text-teal-100 font-semibold">{tokenContext.class.name}</p>
+              <p className="text-xs text-teal-300/80">Prof. {tokenContext.teacher.full_name}</p>
+            </div>
+          )}
+          <p className="text-xs text-teal-200/80 mt-2">
             Introduceți codul PIN din 6 cifre primit de la consilierul școlar pentru a deschide fișa clasei.
           </p>
         </div>
