@@ -304,7 +304,7 @@ export function generate4DigitPIN(): string {
 }
 
 export function generate6DigitPIN(): string {
-  return generate4DigitPIN()
+  return Math.floor(100000 + Math.random() * 900000).toString()
 }
 
 export function generateToken(): string {
@@ -581,7 +581,7 @@ export async function deleteTeacher(id: string): Promise<void> {
 
 export async function assignTeacherToClass(classId: string, teacherId: string): Promise<AssignmentRow> {
   const supabase = getServiceClient()
-  const pin = generate4DigitPIN()
+  const pin = generate6DigitPIN()
   const token = generateToken()
 
   if (supabase) {

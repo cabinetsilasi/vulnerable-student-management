@@ -595,7 +595,7 @@ export function ClassTeacherManager({
               <h3 className="text-lg font-bold text-slate-900">Asociază Clasă cu Diriginte</h3>
             </div>
             <p className="text-xs text-slate-500">
-              Selectați o clasă și un diriginte existent din baza de date pentru a le conecta și a genera codul PIN (4 cifre) și Token-ul unic.
+              Selectați o clasă și un diriginte existent din baza de date pentru a le conecta și a genera codul PIN (6 cifre) și Token-ul unic.
             </p>
             <form onSubmit={handleAssignPair} className="space-y-4">
               <div>
