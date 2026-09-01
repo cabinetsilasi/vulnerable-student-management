@@ -1,7 +1,16 @@
-import { Resend } from "resend"
+import nodemailer from "nodemailer"
 import { SCHOOL_INFO } from "./store"
 
-const resendApiKey = process.env.RESEND_API_KEY
+const smtpUser = process.env.SMTP_USER
+const smtpPass = process.env.SMTP_PASS
+
+const transporter = nodemailer.createTransport({
+  service: "gmail",
+  auth: {
+    user: smtpUser,
+    pass: smtpPass,
+  },
+})
 
 export interface EmailInviteParams {
   toEmail: string
@@ -60,19 +69,18 @@ export async function sendTeacherInvite(params: EmailInviteParams): Promise<{ su
         .replace(/{SCOALA}/g, SCHOOL_INFO.unitate)
     : defaultBodyHtml
 
-  if (resendApiKey) {
+  if (smtpUser && smtpPass) {
     try {
-      const resend = new Resend(resendApiKey)
-      await resend.emails.send({
-        from: "Cabinet Consiliere <onboarding@resend.dev>",
+      await transporter.sendMail({
+        from: `"Cabinet Consiliere" <${smtpUser}>`,
         to: toEmail,
         subject: subject,
         html: bodyHtml,
       })
       return { success: true }
     } catch (e: any) {
-      console.error("Resend API Error:", e)
-      return { success: false, error: e.message || "Eroare la trimiterea emailului prin Resend" }
+      console.error("Nodemailer API Error:", e)
+      return { success: false, error: e.message || "Eroare la trimiterea emailului prin SMTP" }
     }
   } else {
     // Simulated success mode
