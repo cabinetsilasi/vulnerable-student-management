@@ -905,8 +905,10 @@ export async function saveAssignmentSubmission(
   assignmentId: string,
   students: StudentWithVulns[],
   isFinalSubmission: boolean = false
-): Promise<void> {
+): Promise<StudentWithVulns[]> {
   const supabase = getServiceClient()
+  let finalStudents = [...students]
+
   if (supabase) {
     try {
       // Check if assignment is already completed (backend restriction)
@@ -931,11 +933,12 @@ export async function saveAssignmentSubmission(
         await supabase.from("assignments").update(payload).eq("id", assignmentId)
       }
 
-      for (const st of students) {
+      for (let i = 0; i < finalStudents.length; i++) {
+        const st = finalStudents[i]
         if (!st.full_name.trim()) continue
 
         const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(st.id)
-        const studentPayload: any = { assignment_id: assignmentId, position: st.position, full_name: st.full_name }
+        const studentPayload: any = { assignment_id: assignmentId, position: st.position, full_name: st.full_name, general_notes: st.general_notes || "" }
         if (isUUID) {
           studentPayload.id = st.id
         }
@@ -946,14 +949,19 @@ export async function saveAssignmentSubmission(
           .select()
           .single()
 
-        if (studentRecord && st.vulnerabilities) {
-          for (const v of st.vulnerabilities) {
-            await supabase.from("student_vulnerabilities").upsert({
-              student_id: studentRecord.id,
-              category_id: v.category_id,
-              checked: v.checked,
-              notes: v.notes || "",
-            }, { onConflict: "student_id,category_id" })
+        if (studentRecord) {
+          // Update the local student with the real DB UUID
+          finalStudents[i] = { ...finalStudents[i], id: studentRecord.id }
+
+          if (st.vulnerabilities) {
+            for (const v of st.vulnerabilities) {
+              await supabase.from("student_vulnerabilities").upsert({
+                student_id: studentRecord.id,
+                category_id: v.category_id,
+                checked: v.checked,
+                notes: v.notes || "",
+              }, { onConflict: "student_id,category_id" })
+            }
           }
         }
       }
@@ -964,7 +972,7 @@ export async function saveAssignmentSubmission(
 
   const updatedSubmissions = {
     ...memoryState.submissions,
-    [assignmentId]: students,
+    [assignmentId]: finalStudents,
   }
 
   const updatedAssignments = memoryState.assignments.map((a) => {
@@ -983,6 +991,8 @@ export async function saveAssignmentSubmission(
     submissions: updatedSubmissions,
     assignments: updatedAssignments,
   })
+
+  return finalStudents
 }
 
 export async function importBulkData(

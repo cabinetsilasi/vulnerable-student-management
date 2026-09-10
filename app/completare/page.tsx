@@ -128,7 +128,9 @@ function CompletareFormContent() {
           categories={categories}
           initialStudents={students}
           onSaveDraft={async (updatedStudents) => {
-            await saveAssignmentSubmission(assignment.id, updatedStudents, false)
+            const saved = await saveAssignmentSubmission(assignment.id, updatedStudents, false)
+            // Optional: could return this back to TeacherForm if needed
+            return saved
           }}
           onSubmitFinal={async (updatedStudents) => {
             await saveAssignmentSubmission(assignment.id, updatedStudents, true)

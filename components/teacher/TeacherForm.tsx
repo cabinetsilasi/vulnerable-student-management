@@ -9,7 +9,7 @@ interface TeacherFormProps {
   assignment: AssignmentWithRelations
   categories: FormCategory[]
   initialStudents: StudentWithVulns[]
-  onSaveDraft: (students: StudentWithVulns[]) => Promise<void>
+  onSaveDraft: (students: StudentWithVulns[]) => Promise<void | StudentWithVulns[]>
   onSubmitFinal: (students: StudentWithVulns[]) => Promise<void>
   onBackToLogin?: () => void
 }
@@ -90,7 +90,13 @@ export function TeacherForm({
 
     setSaveStatus("saving")
     const timer = setTimeout(async () => {
-      await onSaveDraft(students)
+      const savedStudents = await onSaveDraft(students)
+      if (savedStudents && Array.isArray(savedStudents)) {
+        const hasNewIds = students.some((s, i) => s.id !== savedStudents[i]?.id)
+        if (hasNewIds) {
+          setStudents(savedStudents)
+        }
+      }
       setSaveStatus("saved")
     }, 1200)
 
