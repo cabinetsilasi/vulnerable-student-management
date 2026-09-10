@@ -7,9 +7,11 @@ import {
   StudentWithVulns,
   AssignmentStatus,
   StudentVulnerability,
+  SchoolRow,
 } from "./types"
 import { getServiceClient } from "./supabase/admin"
 
+// Legacy compatibility — used by components that haven't migrated yet
 export interface SchoolInfo {
   unitate: string
   cabinet: string
@@ -18,13 +20,52 @@ export interface SchoolInfo {
   anScolar: string
 }
 
+// Helper: converts SchoolRow to legacy SchoolInfo format
+export function schoolToInfo(school: SchoolRow): SchoolInfo {
+  return {
+    unitate: school.name,
+    cabinet: school.cabinet,
+    consilier: school.consilier,
+    cjrae: school.cjrae,
+    anScolar: school.an_scolar,
+  }
+}
+
+// Default fallback (used only when no school is selected)
 export const SCHOOL_INFO: SchoolInfo = {
-  unitate: 'Școala Gimnazială „Grigore Silași” Beclean',
-  cabinet: 'Școala Gimnazială „Grigore Silași” Beclean',
+  unitate: 'Școala Gimnazială „Grigore Silași" Beclean',
+  cabinet: 'Școala Gimnazială „Grigore Silași" Beclean',
   consilier: 'prof. ORBAN IOAN ȘTEFAN',
   cjrae: 'CJRAE BN (Bistrița-Năsăud)',
   anScolar: '2026-2027',
 }
+
+// ========== SEED DATA ==========
+
+const INITIAL_SCHOOLS: SchoolRow[] = [
+  {
+    id: "school-silasi",
+    name: 'Școala Gimnazială „Grigore Silași" Beclean',
+    short_name: "Silași Beclean",
+    cabinet: 'Școala Gimnazială „Grigore Silași" Beclean',
+    consilier: "prof. ORBAN IOAN ȘTEFAN",
+    cjrae: "CJRAE BN (Bistrița-Năsăud)",
+    an_scolar: "2026-2027",
+    admin_password: "admin123",
+    created_at: new Date().toISOString(),
+  },
+  {
+    id: "school-branistea",
+    name: "Școala Gimnazială Braniștea",
+    short_name: "Braniștea",
+    cabinet: "Școala Gimnazială Braniștea",
+    consilier: "prof. ORBAN IOAN ȘTEFAN",
+    cjrae: "CJRAE BN (Bistrița-Năsăud)",
+    an_scolar: "2026-2027",
+    admin_password: "admin123",
+    created_at: new Date().toISOString(),
+  },
+]
 
 const INITIAL_CATEGORIES: FormCategory[] = [
   {
@@ -110,21 +151,21 @@ const INITIAL_CATEGORIES: FormCategory[] = [
 ]
 
 const INITIAL_CLASSES: ClassRow[] = [
-  { id: "c-5a", name: "Clasa a V-a A", grade_level: "V", total_students: 24, created_at: new Date().toISOString() },
-  { id: "c-5b", name: "Clasa a V-a B", grade_level: "V", total_students: 22, created_at: new Date().toISOString() },
-  { id: "c-6a", name: "Clasa a VI-a A", grade_level: "VI", total_students: 26, created_at: new Date().toISOString() },
-  { id: "c-6b", name: "Clasa a VI-a B", grade_level: "VI", total_students: 25, created_at: new Date().toISOString() },
-  { id: "c-7a", name: "Clasa a VII-a A", grade_level: "VII", total_students: 23, created_at: new Date().toISOString() },
-  { id: "c-8a", name: "Clasa a VIII-a A", grade_level: "VIII", total_students: 28, created_at: new Date().toISOString() },
+  { id: "c-5a", school_id: "school-silasi", name: "Clasa a V-a A", grade_level: "V", total_students: 24, created_at: new Date().toISOString() },
+  { id: "c-5b", school_id: "school-silasi", name: "Clasa a V-a B", grade_level: "V", total_students: 22, created_at: new Date().toISOString() },
+  { id: "c-6a", school_id: "school-silasi", name: "Clasa a VI-a A", grade_level: "VI", total_students: 26, created_at: new Date().toISOString() },
+  { id: "c-6b", school_id: "school-silasi", name: "Clasa a VI-a B", grade_level: "VI", total_students: 25, created_at: new Date().toISOString() },
+  { id: "c-7a", school_id: "school-silasi", name: "Clasa a VII-a A", grade_level: "VII", total_students: 23, created_at: new Date().toISOString() },
+  { id: "c-8a", school_id: "school-silasi", name: "Clasa a VIII-a A", grade_level: "VIII", total_students: 28, created_at: new Date().toISOString() },
 ]
 
 const INITIAL_TEACHERS: TeacherRow[] = [
-  { id: "t-1", full_name: "Pop Maria", email: "maria.pop@silasibeclean.ro", phone: "0740111222", created_at: new Date().toISOString() },
-  { id: "t-2", full_name: "Ionescu Dan", email: "dan.ionescu@silasibeclean.ro", phone: "0740222333", created_at: new Date().toISOString() },
-  { id: "t-3", full_name: "Moldovan Elena", email: "elena.moldovan@silasibeclean.ro", phone: "0740333444", created_at: new Date().toISOString() },
-  { id: "t-4", full_name: "Rusu Alexandru", email: "alexandru.rusu@silasibeclean.ro", phone: "0740444555", created_at: new Date().toISOString() },
-  { id: "t-5", full_name: "Nagy Ana", email: "ana.nagy@silasibeclean.ro", phone: "0740555666", created_at: new Date().toISOString() },
-  { id: "t-6", full_name: "Mureșan Cristian", email: "cristian.muresan@silasibeclean.ro", phone: "0740666777", created_at: new Date().toISOString() },
+  { id: "t-1", school_id: "school-silasi", full_name: "Pop Maria", email: "maria.pop@silasibeclean.ro", phone: "0740111222", created_at: new Date().toISOString() },
+  { id: "t-2", school_id: "school-silasi", full_name: "Ionescu Dan", email: "dan.ionescu@silasibeclean.ro", phone: "0740222333", created_at: new Date().toISOString() },
+  { id: "t-3", school_id: "school-silasi", full_name: "Moldovan Elena", email: "elena.moldovan@silasibeclean.ro", phone: "0740333444", created_at: new Date().toISOString() },
+  { id: "t-4", school_id: "school-silasi", full_name: "Rusu Alexandru", email: "alexandru.rusu@silasibeclean.ro", phone: "0740444555", created_at: new Date().toISOString() },
+  { id: "t-5", school_id: "school-silasi", full_name: "Nagy Ana", email: "ana.nagy@silasibeclean.ro", phone: "0740555666", created_at: new Date().toISOString() },
+  { id: "t-6", school_id: "school-silasi", full_name: "Mureșan Cristian", email: "cristian.muresan@silasibeclean.ro", phone: "0740666777", created_at: new Date().toISOString() },
 ]
 
 const INITIAL_ASSIGNMENTS: AssignmentRow[] = [
@@ -256,9 +297,10 @@ const INITIAL_SUBMISSIONS: Record<string, StudentWithVulns[]> = {
   ],
 }
 
-const STORAGE_KEY = "vulnerable_student_app_data_v1"
+const STORAGE_KEY = "vulnerable_student_app_data_v2"
 
 interface AppStoreState {
+  schools: SchoolRow[]
   classes: ClassRow[]
   teachers: TeacherRow[]
   assignments: AssignmentRow[]
@@ -271,13 +313,19 @@ function loadStore(): AppStoreState {
     try {
       const stored = localStorage.getItem(STORAGE_KEY)
       if (stored) {
-        return JSON.parse(stored)
+        const parsed = JSON.parse(stored)
+        // Ensure schools array exists (migration from v1)
+        if (!parsed.schools) {
+          parsed.schools = INITIAL_SCHOOLS
+        }
+        return parsed
       }
     } catch (e) {
       console.error("Failed loading local storage state", e)
     }
   }
   return {
+    schools: INITIAL_SCHOOLS,
     classes: INITIAL_CLASSES,
     teachers: INITIAL_TEACHERS,
     assignments: INITIAL_ASSIGNMENTS,
@@ -314,14 +362,96 @@ export function generateToken(): string {
   return "token-" + Math.random().toString(36).substring(2, 10) + "-" + Date.now().toString(36)
 }
 
-// Store API Functions with full Supabase Live Sync
+// ========== SCHOOLS API ==========
 
-export async function getStoreData(): Promise<AppStoreState> {
+export async function getSchools(): Promise<SchoolRow[]> {
   const supabase = getServiceClient()
   if (supabase) {
     try {
-      const { data: classesData, error: clsErr } = await supabase.from("classes").select("*").order("name")
-      const { data: teachersData, error: tchErr } = await supabase.from("teachers").select("*").order("full_name")
+      const { data } = await supabase.from("schools").select("*").order("name")
+      if (data && data.length > 0) return data as SchoolRow[]
+    } catch (e) {
+      console.warn("Supabase schools fetch error:", e)
+    }
+  }
+  return memoryState.schools
+}
+
+export async function getSchoolById(id: string): Promise<SchoolRow | null> {
+  const supabase = getServiceClient()
+  if (supabase) {
+    try {
+      const { data } = await supabase.from("schools").select("*").eq("id", id).single()
+      if (data) return data as SchoolRow
+    } catch (e) {
+      console.warn(e)
+    }
+  }
+  return memoryState.schools.find((s) => s.id === id) || null
+}
+
+export async function addSchool(school: Omit<SchoolRow, "id" | "created_at">): Promise<SchoolRow> {
+  const supabase = getServiceClient()
+  if (supabase) {
+    try {
+      const { data, error } = await supabase.from("schools").insert(school).select().single()
+      if (error) throw new Error(error.message)
+      if (data) return data as SchoolRow
+    } catch (e: any) {
+      console.error("Supabase Error (addSchool):", e)
+      throw e
+    }
+  }
+  const newSchool: SchoolRow = {
+    ...school,
+    id: "school-" + Date.now(),
+    created_at: new Date().toISOString(),
+  }
+  saveStoreState({ ...memoryState, schools: [...memoryState.schools, newSchool] })
+  return newSchool
+}
+
+export async function updateSchool(id: string, updates: Partial<SchoolRow>): Promise<void> {
+  const supabase = getServiceClient()
+  if (supabase) {
+    try {
+      await supabase.from("schools").update(updates).eq("id", id)
+    } catch (e) {
+      console.warn(e)
+    }
+  }
+  const updated = memoryState.schools.map((s) => (s.id === id ? { ...s, ...updates } : s))
+  saveStoreState({ ...memoryState, schools: updated })
+}
+
+export async function verifySchoolPassword(schoolId: string, password: string): Promise<boolean> {
+  const school = await getSchoolById(schoolId)
+  if (!school) return false
+  return school.admin_password === password
+}
+
+export async function updateSchoolPassword(schoolId: string, newPassword: string): Promise<void> {
+  await updateSchool(schoolId, { admin_password: newPassword })
+}
+
+// ========== STORE DATA API (School-scoped) ==========
+
+export async function getStoreData(schoolId?: string): Promise<AppStoreState & { schools: SchoolRow[] }> {
+  const supabase = getServiceClient()
+  if (supabase) {
+    try {
+      const { data: schoolsData } = await supabase.from("schools").select("*").order("name")
+
+      let classesQuery = supabase.from("classes").select("*").order("name")
+      let teachersQuery = supabase.from("teachers").select("*").order("full_name")
+
+      if (schoolId) {
+        classesQuery = classesQuery.eq("school_id", schoolId)
+        teachersQuery = teachersQuery.eq("school_id", schoolId)
+      }
+
+      const { data: classesData, error: clsErr } = await classesQuery
+      const { data: teachersData, error: tchErr } = await teachersQuery
       const { data: assignmentsData, error: asgErr } = await supabase.from("assignments").select("*")
       const { data: categoriesData, error: catErr } = await supabase.from("form_categories").select("*").order("position")
 
@@ -330,23 +460,64 @@ export async function getStoreData(): Promise<AppStoreState> {
       if (asgErr) console.error("Error fetching assignments from Supabase:", asgErr)
       if (catErr) console.error("Error fetching categories from Supabase:", catErr)
 
-      const finalClasses = (classesData && classesData.length > 0) ? (classesData as ClassRow[]) : memoryState.classes
-      const finalTeachers = (teachersData && teachersData.length > 0) ? (teachersData as TeacherRow[]) : memoryState.teachers
-      const finalAssignments = assignmentsData ? (assignmentsData as AssignmentRow[]) : memoryState.assignments
+      const finalSchools = (schoolsData && schoolsData.length > 0) ? (schoolsData as SchoolRow[]) : memoryState.schools
+      const finalClasses = (classesData && classesData.length > 0) ? (classesData as ClassRow[]) : filterBySchool(memoryState.classes, schoolId)
+      const finalTeachers = (teachersData && teachersData.length > 0) ? (teachersData as TeacherRow[]) : filterBySchool(memoryState.teachers, schoolId)
       const finalCategories = (categoriesData && categoriesData.length > 0) ? (categoriesData as FormCategory[]) : memoryState.categories
 
+      // Filter assignments to only include those belonging to classes of the selected school
+      const classIds = new Set(finalClasses.map((c) => c.id))
+      const allAssignments = assignmentsData ? (assignmentsData as AssignmentRow[]) : memoryState.assignments
+      const finalAssignments = schoolId ? allAssignments.filter((a) => classIds.has(a.class_id)) : allAssignments
+
+      // Filter submissions to only include those for filtered assignments
+      const assignmentIds = new Set(finalAssignments.map((a) => a.id))
+      const finalSubmissions: Record<string, StudentWithVulns[]> = {}
+      for (const [key, value] of Object.entries(memoryState.submissions)) {
+        if (!schoolId || assignmentIds.has(key)) {
+          finalSubmissions[key] = value
+        }
+      }
+
       return {
+        schools: finalSchools,
         classes: finalClasses,
         teachers: finalTeachers,
         assignments: finalAssignments,
         categories: finalCategories,
-        submissions: memoryState.submissions,
+        submissions: finalSubmissions,
       }
     } catch (e) {
       console.warn("Supabase fetch error, fallback to memory state:", e)
     }
   }
-  return memoryState
+
+  // Fallback to memory state with school filtering
+  const classes = filterBySchool(memoryState.classes, schoolId)
+  const teachers = filterBySchool(memoryState.teachers, schoolId)
+  const classIds = new Set(classes.map((c) => c.id))
+  const assignments = schoolId ? memoryState.assignments.filter((a) => classIds.has(a.class_id)) : memoryState.assignments
+  const assignmentIds = new Set(assignments.map((a) => a.id))
+  const submissions: Record<string, StudentWithVulns[]> = {}
+  for (const [key, value] of Object.entries(memoryState.submissions)) {
+    if (!schoolId || assignmentIds.has(key)) {
+      submissions[key] = value
+    }
+  }
+
+  return {
+    schools: memoryState.schools,
+    classes,
+    teachers,
+    assignments,
+    categories: memoryState.categories,
+    submissions,
+  }
+}
+
+function filterBySchool<T extends { school_id: string }>(items: T[], schoolId?: string): T[] {
+  if (!schoolId) return items
+  return items.filter((item) => item.school_id === schoolId)
 }
 
 export async function getFormCategories(): Promise<FormCategory[]> {
@@ -453,12 +624,13 @@ export async function deleteCategory(id: string): Promise<void> {
   saveStoreState({ ...memoryState, categories: updated })
 }
 
-export async function getAssignmentsWithRelations(): Promise<AssignmentWithRelations[]> {
-  const data = await getStoreData()
+export async function getAssignmentsWithRelations(schoolId?: string): Promise<AssignmentWithRelations[]> {
+  const data = await getStoreData(schoolId)
   const { assignments, classes, teachers } = data
   return assignments.map((a) => {
     const cls = classes.find((c) => c.id === a.class_id) || {
       id: a.class_id,
+      school_id: schoolId || "",
       name: "Clasă necunoscută",
       grade_level: null,
       total_students: 0,
@@ -466,6 +638,7 @@ export async function getAssignmentsWithRelations(): Promise<AssignmentWithRelat
     }
     const tch = teachers.find((t) => t.id === a.teacher_id) || {
       id: a.teacher_id,
+      school_id: schoolId || "",
       full_name: "Diriginte nealocat",
       email: null,
       phone: null,
@@ -479,11 +652,12 @@ export async function getAssignmentsWithRelations(): Promise<AssignmentWithRelat
   })
 }
 
-export async function addClass(name: string, grade_level: string, total_students: number): Promise<ClassRow> {
+export async function addClass(name: string, grade_level: string, total_students: number, schoolId?: string): Promise<ClassRow> {
   const supabase = getServiceClient()
+  const effectiveSchoolId = schoolId || "school-silasi"
   if (supabase) {
     try {
-      const { data, error } = await supabase.from("classes").insert({ name, grade_level, total_students }).select().single()
+      const { data, error } = await supabase.from("classes").insert({ name, grade_level, total_students, school_id: effectiveSchoolId }).select().single()
       if (error) throw new Error(error.message || "Eroare la crearea clasei")
       if (data) return data as ClassRow
     } catch (e: any) {
@@ -493,6 +667,7 @@ export async function addClass(name: string, grade_level: string, total_students
   }
   const newClass: ClassRow = {
     id: "c-" + Date.now(),
+    school_id: effectiveSchoolId,
     name,
     grade_level,
     total_students,
@@ -529,11 +704,12 @@ export async function deleteClass(id: string): Promise<void> {
   saveStoreState({ ...memoryState, classes: updatedClasses, assignments: updatedAssignments })
 }
 
-export async function addTeacher(full_name: string, email: string, phone: string): Promise<TeacherRow> {
+export async function addTeacher(full_name: string, email: string, phone: string, schoolId?: string): Promise<TeacherRow> {
   const supabase = getServiceClient()
+  const effectiveSchoolId = schoolId || "school-silasi"
   if (supabase) {
     try {
-      const { data, error } = await supabase.from("teachers").insert({ full_name, email: email || null, phone: phone || null }).select().single()
+      const { data, error } = await supabase.from("teachers").insert({ full_name, email: email || null, phone: phone || null, school_id: effectiveSchoolId }).select().single()
       if (error) throw new Error(error.message || "Eroare la crearea cadrului didactic")
       if (data) return data as TeacherRow
     } catch (e: any) {
@@ -543,6 +719,7 @@ export async function addTeacher(full_name: string, email: string, phone: string
   }
   const newTeacher: TeacherRow = {
     id: "t-" + Date.now(),
+    school_id: effectiveSchoolId,
     full_name,
     email: email || null,
     phone: phone || null,
@@ -659,6 +836,7 @@ export async function updateAssignmentStatus(id: string, status: AssignmentStatu
 }
 
 export async function getAssignmentByPinOrToken(query: string): Promise<AssignmentWithRelations | null> {
+  // PIN/token lookup is global (not scoped to school) — PIN is unique across all schools
   const data = await getAssignmentsWithRelations()
   const clean = query.trim().toLowerCase()
   return data.find((a) => a.pin === clean || a.token.toLowerCase() === clean) || null
@@ -698,7 +876,7 @@ export async function addStudentsToAssignment(assignmentId: string, studentNames
       console.warn("Supabase add students error:", e)
     }
   }
-  
+
   // Update memory state
   const currentStudents = memoryState.submissions[assignmentId] || []
   let pos = currentStudents.length > 0 ? Math.max(...currentStudents.map(s => s.position)) : 0
@@ -713,7 +891,7 @@ export async function addStudentsToAssignment(assignmentId: string, studentNames
       vulnerabilities: []
     }
   })
-  
+
   saveStoreState({
     ...memoryState,
     submissions: {
@@ -737,7 +915,7 @@ export async function saveAssignmentSubmission(
         .select("status")
         .eq("id", assignmentId)
         .single()
-        
+
       if (existingAssignment?.status === "completat") {
         console.warn(`[Backend] Save rejected: Assignment ${assignmentId} is already completed.`)
         throw new Error("Fișa este securizată și nu mai poate fi modificată.")
@@ -746,16 +924,16 @@ export async function saveAssignmentSubmission(
       const payload: any = { status: isFinalSubmission ? "completat" : undefined }
       // Remove undefined keys to prevent erasing existing data if isFinalSubmission is false
       if (payload.status === undefined) delete payload.status
-      
+
       if (isFinalSubmission) payload.submitted_at = new Date().toISOString()
-      
+
       if (Object.keys(payload).length > 0) {
         await supabase.from("assignments").update(payload).eq("id", assignmentId)
       }
 
       for (const st of students) {
         if (!st.full_name.trim()) continue
-        
+
         const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(st.id)
         const studentPayload: any = { assignment_id: assignmentId, position: st.position, full_name: st.full_name }
         if (isUUID) {
@@ -808,21 +986,24 @@ export async function saveAssignmentSubmission(
 }
 
 export async function importBulkData(
-  rows: Array<{ diriginte: string; email?: string; phone?: string; clasa: string; totalElevi?: number }>
+  rows: Array<{ diriginte: string; email?: string; phone?: string; clasa: string; totalElevi?: number }>,
+  schoolId?: string
 ): Promise<{ addedClasses: number; addedTeachers: number; assigned: number }> {
   let addedClasses = 0
   let addedTeachers = 0
   let assigned = 0
 
+  const effectiveSchoolId = schoolId || "school-silasi"
   const state = { ...memoryState }
 
   for (const row of rows) {
     if (!row.clasa || !row.diriginte) continue
 
-    let cls = state.classes.find((c) => c.name.toLowerCase() === row.clasa.trim().toLowerCase())
+    let cls = state.classes.find((c) => c.name.toLowerCase() === row.clasa.trim().toLowerCase() && c.school_id === effectiveSchoolId)
     if (!cls) {
       cls = {
         id: "c-" + Math.random().toString(36).substr(2, 7),
+        school_id: effectiveSchoolId,
         name: row.clasa.trim(),
         grade_level: row.clasa.trim().split(" ")[2] || "I",
         total_students: Number(row.totalElevi) || 25,
@@ -832,10 +1013,11 @@ export async function importBulkData(
       addedClasses++
     }
 
-    let tch = state.teachers.find((t) => t.full_name.toLowerCase() === row.diriginte.trim().toLowerCase())
+    let tch = state.teachers.find((t) => t.full_name.toLowerCase() === row.diriginte.trim().toLowerCase() && t.school_id === effectiveSchoolId)
     if (!tch) {
       tch = {
         id: "t-" + Math.random().toString(36).substr(2, 7),
+        school_id: effectiveSchoolId,
         full_name: row.diriginte.trim(),
         email: row.email || null,
         phone: row.phone || null,
@@ -870,6 +1052,7 @@ export async function importBulkData(
 
 export async function resetToDefaultSeed(): Promise<void> {
   const defaultState: AppStoreState = {
+    schools: INITIAL_SCHOOLS,
     classes: INITIAL_CLASSES,
     teachers: INITIAL_TEACHERS,
     assignments: INITIAL_ASSIGNMENTS,

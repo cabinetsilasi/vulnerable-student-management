@@ -10,14 +10,16 @@ import {
   AlignmentType,
   BorderStyle,
 } from "docx"
-import { AssignmentWithRelations, FormCategory, StudentWithVulns } from "../types"
-import { SCHOOL_INFO } from "../store"
+import { AssignmentWithRelations, FormCategory, StudentWithVulns, SchoolRow } from "../types"
+import { SCHOOL_INFO, schoolToInfo } from "../store"
 
 export async function generateDocxForAssignment(
   assignment: AssignmentWithRelations,
   categories: FormCategory[],
-  students: StudentWithVulns[]
+  students: StudentWithVulns[],
+  school?: SchoolRow
 ): Promise<Blob> {
+  const info = school ? schoolToInfo(school) : SCHOOL_INFO
   const visibleCategories = categories.filter((c) => c.visible).sort((a, b) => a.position - b.position)
 
   // Header paragraphs
@@ -56,19 +58,19 @@ export async function generateDocxForAssignment(
     new Paragraph({
       children: [
         new TextRun({ text: "UNITATEA DE ÎNVĂŢĂMÂNT: ", bold: true, size: 20 }),
-        new TextRun({ text: SCHOOL_INFO.unitate.toUpperCase(), size: 20 }),
+        new TextRun({ text: info.unitate.toUpperCase(), size: 20 }),
       ],
     }),
     new Paragraph({
       children: [
         new TextRun({ text: "CABINET ȘCOLAR DE ASISTENȚĂ PSIHOPEDAGOGICĂ: ", bold: true, size: 20 }),
-        new TextRun({ text: SCHOOL_INFO.cabinet.toUpperCase(), size: 20 }),
+        new TextRun({ text: info.cabinet.toUpperCase(), size: 20 }),
       ],
     }),
     new Paragraph({
       children: [
         new TextRun({ text: "PROFESOR CONSILIER ȘCOLAR: ", bold: true, size: 20 }),
-        new TextRun({ text: SCHOOL_INFO.consilier, size: 20 }),
+        new TextRun({ text: info.consilier, size: 20 }),
       ],
     }),
     new Paragraph({
@@ -90,7 +92,7 @@ export async function generateDocxForAssignment(
       alignment: AlignmentType.CENTER,
       children: [
         new TextRun({
-          text: `FIȘĂ DE IDENTIFICARE A ELEVILOR DIN CATEGORII VULNERABILE\nAn școlar ${SCHOOL_INFO.anScolar}`,
+          text: `FIȘĂ DE IDENTIFICARE A ELEVILOR DIN CATEGORII VULNERABILE\nAn școlar ${info.anScolar}`,
           bold: true,
           size: 24,
         }),
@@ -193,7 +195,7 @@ export async function generateDocxForAssignment(
     new Paragraph({
       children: [
         new TextRun({ text: "Profesor consilier școlar: ", bold: true, size: 18 }),
-        new TextRun({ text: SCHOOL_INFO.consilier, size: 18 }),
+        new TextRun({ text: info.consilier, size: 18 }),
         new TextRun({ text: "                          Semnătura: ....................................", size: 18 }),
       ],
     }),

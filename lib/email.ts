@@ -1,5 +1,5 @@
 import nodemailer from "nodemailer"
-import { SCHOOL_INFO } from "./store"
+import { SCHOOL_INFO, SchoolInfo } from "./store"
 
 const smtpUser = process.env.SMTP_USER
 const smtpPass = process.env.SMTP_PASS
@@ -20,25 +20,27 @@ export interface EmailInviteParams {
   tokenLink: string
   customSubject?: string
   customBody?: string
+  schoolInfo?: SchoolInfo
 }
 
 export async function sendTeacherInvite(params: EmailInviteParams): Promise<{ success: boolean; simulated?: boolean; error?: string }> {
-  const { toEmail, teacherName, className, pin, tokenLink, customSubject, customBody } = params
+  const { toEmail, teacherName, className, pin, tokenLink, customSubject, customBody, schoolInfo } = params
+  const info = schoolInfo || SCHOOL_INFO
 
-  const defaultSubject = `Fișă de identificare elevi vulnerabili 2026-2027 - ${className} (${SCHOOL_INFO.unitate})`
+  const defaultSubject = `Fișă de identificare elevi vulnerabili ${info.anScolar} - ${className} (${info.unitate})`
 
   const subject = customSubject || defaultSubject
 
   const defaultBodyHtml = `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #1e293b; border: 1px solid #e2e8f0; border-radius: 8px; padding: 24px; background-color: #ffffff;">
       <div style="text-align: center; border-bottom: 2px solid #0d9488; padding-bottom: 16px; margin-bottom: 20px;">
-        <h2 style="color: #0f172a; margin: 0;">${SCHOOL_INFO.unitate}</h2>
+        <h2 style="color: #0f172a; margin: 0;">${info.unitate}</h2>
         <p style="color: #0d9488; margin: 4px 0 0 0; font-weight: bold;">Cabinet Școlar de Asistență Psihopedagogică</p>
       </div>
 
       <p>Stimate/Stimat profesor diriginte <strong>${teacherName}</strong>,</p>
 
-      <p>Vă rugăm să completați <strong>Fișa de identificare a elevilor din categorii vulnerabile</strong> pentru <strong>${className}</strong> aferentă anului școlar ${SCHOOL_INFO.anScolar}.</p>
+      <p>Vă rugăm să completați <strong>Fișa de identificare a elevilor din categorii vulnerabile</strong> pentru <strong>${className}</strong> aferentă anului școlar ${info.anScolar}.</p>
 
       <div style="background-color: #f8fafc; border-left: 4px solid #0d9488; padding: 16px; margin: 20px 0; border-radius: 4px;">
         <p style="margin: 0 0 8px 0;"><strong>Acces rapid în portal fără parolă:</strong></p>
@@ -54,7 +56,7 @@ export async function sendTeacherInvite(params: EmailInviteParams): Promise<{ su
 
       <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 24px 0;" />
       <p style="font-size: 12px; color: #94a3b8; text-align: center;">
-        Consilier școlar: ${SCHOOL_INFO.consilier}<br/>
+        Consilier școlar: ${info.consilier}<br/>
         Mesaj transmis automat prin Cabinetul de Asistență Psihopedagogică.
       </p>
     </div>
@@ -66,7 +68,7 @@ export async function sendTeacherInvite(params: EmailInviteParams): Promise<{ su
         .replace(/{CLASA}/g, className)
         .replace(/{PIN}/g, pin)
         .replace(/{LINK_DIRECT}/g, tokenLink)
-        .replace(/{SCOALA}/g, SCHOOL_INFO.unitate)
+        .replace(/{SCOALA}/g, info.unitate)
     : defaultBodyHtml
 
   if (smtpUser && smtpPass) {

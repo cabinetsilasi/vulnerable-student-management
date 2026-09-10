@@ -1,7 +1,20 @@
 export type AssignmentStatus = "asteptare" | "trimis" | "completat"
 
+export interface SchoolRow {
+  id: string
+  name: string
+  short_name: string | null
+  cabinet: string
+  consilier: string
+  cjrae: string
+  an_scolar: string
+  admin_password: string
+  created_at: string
+}
+
 export interface ClassRow {
   id: string
+  school_id: string
   name: string
   grade_level: string | null
   total_students: number
@@ -10,6 +23,7 @@ export interface ClassRow {
 
 export interface TeacherRow {
   id: string
+  school_id: string
   full_name: string
   email: string | null
   phone: string | null

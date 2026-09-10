@@ -2,22 +2,24 @@
 
 import { useState } from "react"
 import { AssignmentWithRelations } from "@/lib/types"
-import { SCHOOL_INFO } from "@/lib/store"
+import { SchoolInfo, SCHOOL_INFO } from "@/lib/store"
 import { Mail, Send, Copy, Check, Key, Link as LinkIcon, Sparkles, AlertCircle } from "lucide-react"
 
 interface EmailDispatchCenterProps {
   assignments: AssignmentWithRelations[]
   onUpdateStatus: (id: string, status: any, invited: boolean) => Promise<void>
+  schoolInfo?: SchoolInfo
 }
 
-export function EmailDispatchCenter({ assignments, onUpdateStatus }: EmailDispatchCenterProps) {
+export function EmailDispatchCenter({ assignments, onUpdateStatus, schoolInfo }: EmailDispatchCenterProps) {
+  const info = schoolInfo || SCHOOL_INFO
   const [copiedId, setCopiedId] = useState<string | null>(null)
   const [sendingId, setSendingId] = useState<string | null>(null)
   const [batchSending, setBatchSending] = useState(false)
 
   // Custom template state
   const [subjectTemplate, setSubjectTemplate] = useState(
-    `Fișă de identificare elevi vulnerabili 2026-2027 - {CLASA} (${SCHOOL_INFO.unitate})`
+    `Fișă de identificare elevi vulnerabili ${info.anScolar} - {CLASA} (${info.unitate})`
   )
   const [showTemplateEditor, setShowTemplateEditor] = useState(false)
   const [sendStatusMessage, setSendStatusMessage] = useState<string | null>(null)

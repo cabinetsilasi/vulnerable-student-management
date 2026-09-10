@@ -7,9 +7,12 @@ import {
   getFormCategories,
   getStudentsForAssignment,
   saveAssignmentSubmission,
+  getSchoolById,
+  schoolToInfo,
   SCHOOL_INFO,
+  SchoolInfo,
 } from "@/lib/store"
-import { AssignmentWithRelations, FormCategory, StudentWithVulns } from "@/lib/types"
+import { AssignmentWithRelations, FormCategory, StudentWithVulns, SchoolRow } from "@/lib/types"
 import { TeacherForm } from "@/components/teacher/TeacherForm"
 import { Key, ShieldAlert, RefreshCw, ArrowLeft, GraduationCap } from "lucide-react"
 
@@ -29,6 +32,7 @@ function CompletareFormContent() {
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
 
   const [tokenContext, setTokenContext] = useState<AssignmentWithRelations | null>(null)
+  const [schoolInfo, setSchoolInfo] = useState<SchoolInfo>(SCHOOL_INFO)
 
   const loadAssignmentData = async (queryStr: string) => {
     if (!queryStr.trim()) {
@@ -42,6 +46,11 @@ function CompletareFormContent() {
     if (found) {
       const cats = await getFormCategories()
       const existingStudents = await getStudentsForAssignment(found.id)
+      // Resolve school from assignment's class
+      if (found.class.school_id) {
+        const school = await getSchoolById(found.class.school_id)
+        if (school) setSchoolInfo(schoolToInfo(school))
+      }
       setAssignment(found)
       setCategories(cats)
       setStudents(existingStudents)
@@ -145,7 +154,7 @@ function CompletareFormContent() {
           <div className="w-9 h-9 rounded-xl bg-teal-500/20 border border-teal-400/30 text-teal-300 flex items-center justify-center font-bold">
             <GraduationCap className="w-5 h-5 text-teal-300" />
           </div>
-          <span className="text-sm font-bold text-white tracking-wide">{SCHOOL_INFO.unitate}</span>
+          <span className="text-sm font-bold text-white tracking-wide">{schoolInfo.unitate}</span>
         </div>
         <button
           onClick={() => router.push("/")}
@@ -195,7 +204,7 @@ function CompletareFormContent() {
       </div>
 
       <footer className="text-center text-xs text-teal-300/70 py-4 relative z-10 border-t border-teal-800/40 max-w-4xl mx-auto w-full">
-        Consilier școlar: <strong className="text-white">{SCHOOL_INFO.consilier}</strong>
+        Consilier școlar: <strong className="text-white">{schoolInfo.consilier}</strong>
       </footer>
     </div>
   )

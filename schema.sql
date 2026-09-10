@@ -1,11 +1,25 @@
 -- Schema Supabase / PostgreSQL pentru Sistem Management Elevi Vulnerabili (Model CJRAE BN)
--- Școala Gimnazială „Grigore Silași” Beclean
+-- Multi-Școală: Școala Gimnazială „Grigore Silași" Beclean + Școala Gimnazială Braniștea
 
 -- 1. Tabele de bază
+
+-- Tabel Școli (multi-tenant root)
+CREATE TABLE IF NOT EXISTS public.schools (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  name TEXT NOT NULL,
+  short_name TEXT,
+  cabinet TEXT,
+  consilier TEXT NOT NULL,
+  cjrae TEXT NOT NULL DEFAULT 'CJRAE BN (Bistrița-Năsăud)',
+  an_scolar TEXT NOT NULL DEFAULT '2026-2027',
+  admin_password TEXT NOT NULL DEFAULT 'admin123',
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
 
 -- Tabel Clase
 CREATE TABLE IF NOT EXISTS public.classes (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  school_id UUID NOT NULL REFERENCES public.schools(id) ON DELETE CASCADE,
   name TEXT NOT NULL,
   grade_level TEXT,
   total_students INT NOT NULL DEFAULT 0,
@@ -15,6 +29,7 @@ CREATE TABLE IF NOT EXISTS public.classes (
 -- Tabel Diriginți / Cadre Didactice
 CREATE TABLE IF NOT EXISTS public.teachers (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  school_id UUID NOT NULL REFERENCES public.schools(id) ON DELETE CASCADE,
   full_name TEXT NOT NULL,
   email TEXT,
   phone TEXT,
@@ -66,7 +81,13 @@ CREATE TABLE IF NOT EXISTS public.student_vulnerabilities (
   UNIQUE(student_id, category_id)
 );
 
--- 2. Seed inițial - Categorii Standard CJRAE BN
+-- 2. Seed inițial - Școli
+INSERT INTO public.schools (name, short_name, cabinet, consilier, cjrae, an_scolar, admin_password) VALUES
+('Școala Gimnazială „Grigore Silași" Beclean', 'Silași Beclean', 'Școala Gimnazială „Grigore Silași" Beclean', 'prof. ORBAN IOAN ȘTEFAN', 'CJRAE BN (Bistrița-Năsăud)', '2026-2027', 'admin123'),
+('Școala Gimnazială Braniștea', 'Braniștea', 'Școala Gimnazială Braniștea', 'prof. ORBAN IOAN ȘTEFAN', 'CJRAE BN (Bistrița-Năsăud)', '2026-2027', 'admin123')
+ON CONFLICT DO NOTHING;
+
+-- 3. Seed inițial - Categorii Standard CJRAE BN (Globale)
 INSERT INTO public.form_categories (key, label, type, position, visible, is_custom) VALUES
 ('rezultate_slabe', 'Rezultate școlare slabe (corigențe / repetenție)', 'checkbox_notes', 1, true, false),
 ('comportament', 'Probleme de comportament (bullying, disciplină)', 'checkbox_notes', 2, true, false),

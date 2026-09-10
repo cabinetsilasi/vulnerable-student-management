@@ -9,9 +9,10 @@ interface OverviewDashboardProps {
   categories: FormCategory[]
   submissions: Record<string, StudentWithVulns[]>
   onExportExcel: () => void
+  schoolName?: string
 }
 
-export function OverviewDashboard({ assignments, categories, submissions, onExportExcel }: OverviewDashboardProps) {
+export function OverviewDashboard({ assignments, categories, submissions, onExportExcel, schoolName }: OverviewDashboardProps) {
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedClass, setSelectedClass] = useState("all")
   const [selectedCategory, setSelectedCategory] = useState("all")
@@ -78,7 +79,7 @@ export function OverviewDashboard({ assignments, categories, submissions, onExpo
             Panou Centralizator Rapoarte & Statistici CJRAE
           </h2>
           <p className="text-teal-100/90 text-sm mt-1">
-            Monitorizarea elevilor din categorii vulnerabile pentru Școala Gimnazială „Grigore Silași” Beclean
+            Monitorizarea elevilor din categorii vulnerabile pentru {schoolName || 'toate unitățile școlare'}
           </p>
         </div>
         <button

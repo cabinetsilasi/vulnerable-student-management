@@ -1,12 +1,14 @@
 import * as XLSX from "xlsx"
-import { AssignmentWithRelations, FormCategory, StudentWithVulns } from "../types"
-import { SCHOOL_INFO } from "../store"
+import { AssignmentWithRelations, FormCategory, StudentWithVulns, SchoolRow } from "../types"
+import { SCHOOL_INFO, schoolToInfo } from "../store"
 
 export function exportToExcel(
   assignments: AssignmentWithRelations[],
   categories: FormCategory[],
-  allSubmissions: Record<string, StudentWithVulns[]>
+  allSubmissions: Record<string, StudentWithVulns[]>,
+  school?: SchoolRow
 ) {
+  const info = school ? schoolToInfo(school) : SCHOOL_INFO
   const visibleCategories = categories.filter((c) => c.visible).sort((a, b) => a.position - b.position)
 
   // 1. Sheet 1: Centralizat toate cazurile de elevi vulnerabili
@@ -67,6 +69,6 @@ export function exportToExcel(
   const wsSummary = XLSX.utils.json_to_sheet(summaryRows)
   XLSX.utils.book_append_sheet(wb, wsSummary, "Statistici per Clasă")
 
-  const fileName = `Centralizator_CJRAE_Elevi_Vulnerabili_${SCHOOL_INFO.unitate.replace(/[^a-zA-Z0-9]/g, "_")}.xlsx`
+  const fileName = `Centralizator_CJRAE_Elevi_Vulnerabili_${info.unitate.replace(/[^a-zA-Z0-9]/g, "_")}.xlsx`
   XLSX.writeFile(wb, fileName)
 }

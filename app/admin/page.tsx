@@ -20,11 +20,13 @@ import {
   importBulkData,
   saveAssignmentSubmission,
   resetToDefaultSeed,
-  SCHOOL_INFO,
   getStudentsForAssignment,
   addStudentsToAssignment,
+  getSchoolById,
+  schoolToInfo,
+  SCHOOL_INFO,
 } from "@/lib/store"
-import { AssignmentWithRelations, ClassRow, FormCategory, TeacherRow, StudentWithVulns } from "@/lib/types"
+import { AssignmentWithRelations, ClassRow, FormCategory, TeacherRow, StudentWithVulns, SchoolRow } from "@/lib/types"
 import { OverviewDashboard } from "@/components/admin/OverviewDashboard"
 import { ClassTeacherManager } from "@/components/admin/ClassTeacherManager"
 import { FormBuilder } from "@/components/admin/FormBuilder"
@@ -50,18 +52,26 @@ export default function AdminPage() {
   const [activeTab, setActiveTab] = useState<"overview" | "classes" | "form" | "email" | "export">("overview")
   const [loading, setLoading] = useState(true)
 
+  const [currentSchool, setCurrentSchool] = useState<SchoolRow | null>(null)
+  const [schoolId, setSchoolId] = useState<string | null>(null)
   const [assignments, setAssignments] = useState<AssignmentWithRelations[]>([])
   const [classes, setClasses] = useState<ClassRow[]>([])
   const [teachers, setTeachers] = useState<TeacherRow[]>([])
   const [categories, setCategories] = useState<FormCategory[]>([])
   const [submissions, setSubmissions] = useState<Record<string, StudentWithVulns[]>>({})
 
-  // Load store data
-  const refreshData = async () => {
+  // Load store data (scoped to school)
+  const refreshData = async (sid?: string) => {
+    const effectiveSchoolId = sid || schoolId
     setLoading(true)
-    const store = await getStoreData()
-    const assigns = await getAssignmentsWithRelations()
+    const store = await getStoreData(effectiveSchoolId || undefined)
+    const assigns = await getAssignmentsWithRelations(effectiveSchoolId || undefined)
     const cats = await getAllCategories()
+
+    if (effectiveSchoolId) {
+      const school = await getSchoolById(effectiveSchoolId)
+      setCurrentSchool(school)
+    }
 
     setClasses(store.classes)
     setTeachers(store.teachers)
@@ -72,30 +82,41 @@ export default function AdminPage() {
   }
 
   useEffect(() => {
-    // Auth check
+    // Auth check + school context
     if (typeof window !== "undefined") {
       const auth = sessionStorage.getItem("admin_auth")
       if (!auth) {
         // router.push("/")
       }
+      const sid = sessionStorage.getItem("admin_school_id")
+      if (sid) {
+        setSchoolId(sid)
+        refreshData(sid)
+      } else {
+        refreshData()
+      }
+    } else {
+      refreshData()
     }
-    refreshData()
   }, [])
+
+  const schoolInfo = currentSchool ? schoolToInfo(currentSchool) : SCHOOL_INFO
 
   const handleLogout = () => {
     if (typeof window !== "undefined") {
       sessionStorage.removeItem("admin_auth")
+      sessionStorage.removeItem("admin_school_id")
     }
     router.push("/")
   }
 
   const handleExportExcel = () => {
-    exportToExcel(assignments, categories, submissions)
+    exportToExcel(assignments, categories, submissions, currentSchool || undefined)
   }
 
   const handleExportDocxSingle = async (assign: AssignmentWithRelations) => {
     const students = submissions[assign.id] || []
-    const blob = await generateDocxForAssignment(assign, categories, students)
+    const blob = await generateDocxForAssignment(assign, categories, students, currentSchool || undefined)
 
     const url = URL.createObjectURL(blob)
     const a = document.createElement("a")
@@ -133,13 +154,13 @@ export default function AdminPage() {
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h1 className="text-base font-bold text-white tracking-wide">{SCHOOL_INFO.unitate}</h1>
+                <h1 className="text-base font-bold text-white tracking-wide">{schoolInfo.unitate}</h1>
                 <span className="px-2.5 py-0.5 bg-teal-400/20 text-teal-200 text-[10px] font-extrabold rounded-full border border-teal-300/30">
                   CJRAE BN
                 </span>
               </div>
               <p className="text-xs text-teal-100/90">
-                Cabinet Școlar Psihopedagogic | Consilier: <strong className="text-white font-bold">{SCHOOL_INFO.consilier}</strong>
+                Cabinet Școlar Psihopedagogic | Consilier: <strong className="text-white font-bold">{schoolInfo.consilier}</strong>
               </p>
             </div>
           </div>
@@ -147,7 +168,7 @@ export default function AdminPage() {
           <div className="flex items-center gap-2">
             <button
               onClick={async () => {
-                if (confirm("Resetăm datele la configurația implicită de test (Școala Grigore Silași)?")) {
+                if (confirm("Resetăm datele la configurația implicită de test?")) {
                   await resetToDefaultSeed()
                   await refreshData()
                 }
@@ -243,6 +264,7 @@ export default function AdminPage() {
             categories={categories}
             submissions={submissions}
             onExportExcel={handleExportExcel}
+            schoolName={schoolInfo.unitate}
           />
         )}
 
@@ -258,7 +280,7 @@ export default function AdminPage() {
               await refreshData()
             }}
             onAddClass={async (name, grade, total, teacherId) => {
-              const newCls = await addClass(name, grade, total)
+              const newCls = await addClass(name, grade, total, schoolId || undefined)
               if (teacherId && newCls?.id) {
                 await assignTeacherToClass(newCls.id, teacherId)
               }
@@ -270,7 +292,7 @@ export default function AdminPage() {
               if (teacherId) {
                 assign = await assignTeacherToClass(id, teacherId)
               } else {
-                const store = await getStoreData()
+                const store = await getStoreData(schoolId || undefined)
                 assign = store.assignments.find(a => a.class_id === id) || null
               }
               if (assign && pastedStudents && pastedStudents.length > 0) {
@@ -279,7 +301,7 @@ export default function AdminPage() {
               await refreshData()
             }}
             onAddTeacher={async (name, email, phone, classId) => {
-              const newTch = await addTeacher(name, email, phone)
+              const newTch = await addTeacher(name, email, phone, schoolId || undefined)
               if (classId && newTch?.id) {
                 await assignTeacherToClass(classId, newTch.id)
               }
@@ -295,7 +317,7 @@ export default function AdminPage() {
             }}
             onRefreshData={refreshData}
             onBulkImport={async (rows) => {
-              await importBulkData(rows)
+              await importBulkData(rows, schoolId || undefined)
               await refreshData()
             }}
             onDeleteClass={async (id) => {
@@ -334,6 +356,7 @@ export default function AdminPage() {
               await updateAssignmentStatus(id, status, invited)
               await refreshData()
             }}
+            schoolInfo={schoolInfo}
           />
         )}
 
