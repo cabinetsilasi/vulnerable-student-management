@@ -24,7 +24,33 @@ export function TeacherForm({
 }: TeacherFormProps) {
   const visibleCategories = categories.filter((c) => c.visible).sort((a, b) => a.position - b.position)
 
-  const [students, setStudents] = useState<StudentWithVulns[]>(initialStudents)
+  const [students, setStudents] = useState<StudentWithVulns[]>(() => {
+    if (initialStudents && initialStudents.length > 0) return initialStudents
+    
+    // Auto-generate empty rows based on total_students if the class is completely new
+    const total = assignment?.class?.total_students || 0
+    if (total <= 0) return []
+
+    const emptyRows: StudentWithVulns[] = []
+    for (let i = 0; i < total; i++) {
+      emptyRows.push({
+        id: "st-new-" + Date.now() + "-" + Math.random().toString(36).substr(2, 4) + "-" + i,
+        assignment_id: assignment.id,
+        position: i + 1,
+        full_name: "",
+        general_notes: "",
+        created_at: new Date().toISOString(),
+        vulnerabilities: visibleCategories.map((cat) => ({
+          id: "v-" + Math.random().toString(36).substr(2, 6),
+          student_id: "",
+          category_id: cat.id,
+          checked: false,
+          notes: "",
+        })),
+      })
+    }
+    return emptyRows
+  })
   const [saveStatus, setSaveStatus] = useState<"saved" | "saving" | "idle">("idle")
   const [showConfirmModal, setShowConfirmModal] = useState(false)
   

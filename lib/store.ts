@@ -860,6 +860,7 @@ export async function addStudentsToAssignment(assignmentId: string, studentNames
   const validNames = studentNames.map(n => n.trim()).filter(n => n.length > 0)
   if (validNames.length === 0) return
 
+  let insertedStudents: any[] = []
   if (supabase) {
     try {
       // Find current max position
@@ -868,9 +869,15 @@ export async function addStudentsToAssignment(assignmentId: string, studentNames
 
       for (const name of validNames) {
         currentMaxPos++
-        await supabase
+        const { data } = await supabase
           .from("students")
           .insert({ assignment_id: assignmentId, position: currentMaxPos, full_name: name })
+          .select()
+          .single()
+        
+        if (data) {
+          insertedStudents.push(data)
+        }
       }
     } catch (e) {
       console.warn("Supabase add students error:", e)
@@ -880,10 +887,13 @@ export async function addStudentsToAssignment(assignmentId: string, studentNames
   // Update memory state
   const currentStudents = memoryState.submissions[assignmentId] || []
   let pos = currentStudents.length > 0 ? Math.max(...currentStudents.map(s => s.position)) : 0
-  const newStudents: StudentWithVulns[] = validNames.map(name => {
+  
+  const newStudents: StudentWithVulns[] = validNames.map((name, index) => {
     pos++
+    // Use the real UUID from DB if available, otherwise fallback to fake ID
+    const realId = insertedStudents[index]?.id
     return {
-      id: "s-" + Math.random().toString(36).substr(2, 7),
+      id: realId || "s-" + Math.random().toString(36).substr(2, 7),
       assignment_id: assignmentId,
       position: pos,
       full_name: name,
