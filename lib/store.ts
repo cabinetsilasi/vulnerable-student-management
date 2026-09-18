@@ -949,15 +949,27 @@ export async function saveAssignmentSubmission(
 
         const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(st.id)
         const studentPayload: any = { assignment_id: assignmentId, position: st.position, full_name: st.full_name, general_notes: st.general_notes || "" }
+        
+        let studentRecord = null;
+        
         if (isUUID) {
           studentPayload.id = st.id
+          const { data, error } = await supabase
+            .from("students")
+            .upsert(studentPayload, { onConflict: "id" })
+            .select()
+            .single()
+          if (error) console.warn("Supabase upsert error:", error)
+          studentRecord = data
+        } else {
+          const { data, error } = await supabase
+            .from("students")
+            .insert(studentPayload)
+            .select()
+            .single()
+          if (error) console.warn("Supabase insert error:", error)
+          studentRecord = data
         }
-
-        const { data: studentRecord } = await supabase
-          .from("students")
-          .upsert(studentPayload, { onConflict: "id" })
-          .select()
-          .single()
 
         if (studentRecord) {
           // Update the local student with the real DB UUID
